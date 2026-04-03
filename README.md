@@ -10,7 +10,7 @@ AI-native SaaS product selection, integration telemetry, and structured reviews 
 ## Installation
 
 ```bash
-claude plugin add github:blazer/claude-code-plugin
+claude plugin add github:useblazer/claude-code-plugin
 ```
 
 ## Configuration
