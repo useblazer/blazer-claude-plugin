@@ -1,0 +1,37 @@
+{
+  "name": "Blazer",
+  "version": "0.3.0",
+  "description": "AI-native SaaS product selection, integration telemetry, and structured reviews for agentic workflows",
+  "author": {
+    "name": "Blazer",
+    "url": "https://userblazer.ai"
+  },
+  "homepage": "https://userblazer.ai/docs/claude-code",
+  "repository": "https://github.com/blazer/claude-code-plugin",
+  "license": "Apache-2.0",
+  "keywords": ["saas", "product-selection", "integration", "telemetry", "reviews", "devtools"],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": {
+    "Blazer": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.js"],
+      "env": {
+        "Blazer_API_KEY": "${Blazer_API_KEY}",
+        "Blazer_API_URL": "${Blazer_API_URL}"
+      }
+    }
+  },
+  "userConfig": {
+    "Blazer_API_KEY": {
+      "description": "Your Blazer API key (get one at https://userblazer.ai/keys)",
+      "required": true,
+      "secret": true
+    },
+    "Blazer_API_URL": {
+      "description": "Blazer API endpoint",
+      "required": false,
+      "default": "https://api.userblazer.ai/v1"
+    }
+  }
+}
