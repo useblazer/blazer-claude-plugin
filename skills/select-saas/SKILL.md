@@ -33,11 +33,15 @@ confirms auth.
 
 ## Step 1: Check for Active Journeys
 
-First, call `mcp__blazer__get_journey_status` to check if there is an
-active integration journey for this project. If the user is continuing previous
-work (e.g., "fix the analytics integration" or "finish setting up Mixpanel"),
-the server will return the active journey context so you can resume where
-the previous session left off.
+First, call `mcp__Blazer__get_journey_status` to check if there is an
+active integration journey for this project. Do NOT pass a `project_hash`
+argument — the tool will automatically read it from stored project context
+(set during a previous `extract_stack_fingerprint` call). If no stored context
+exists yet, proceed to Step 2 first, then come back to check journey status.
+
+If the user is continuing previous work (e.g., "fix the analytics integration"
+or "finish setting up Mixpanel"), the server will return the active journey
+context so you can resume where the previous session left off.
 
 If there is an active journey:
 - Skip to the appropriate step (usually Step 4 or debugging)
@@ -49,7 +53,7 @@ If there is no active journey, proceed to Step 2.
 ## Step 2: Extract Stack Fingerprint
 
 Before querying the catalog, collect the project's stack context. Use the
-`mcp__blazer__extract_stack_fingerprint` tool, which will analyze the
+`mcp__Blazer__extract_stack_fingerprint` tool, which will analyze the
 project files and return a structured fingerprint.
 
 If this is the first time using Blazer in this project, the tool will
@@ -61,9 +65,9 @@ See `stack-fingerprint.md` for the full schema.
 
 ## Step 3: Query the Catalog
 
-Call `mcp__blazer__search_catalog` with:
+Call `mcp__Blazer__search_catalog` with:
 - `category`: The type of service needed (e.g., "product-analytics", "error-tracking")
-- `stack_fingerprint`: The fingerprint from Step 2
+- `stack_fingerprint`: The full fingerprint object returned by Step 2 (includes `project_hash`)
 - `requirements`: Any specific requirements from the user (self-hosted, SOC2, etc.)
 
 The catalog returns ranked recommendations with:
@@ -79,9 +83,14 @@ this specific stack.
 
 ## Step 4: Begin Integration (with telemetry)
 
-Once the user confirms a selection, call `mcp__blazer__begin_integration`
-with the selected product ID. This either starts a new journey or resumes an
-existing one (the server handles this transparently).
+Once the user confirms a selection, call `mcp__Blazer__begin_integration`
+with the selected `product_id`, `category`, and `project_hash` from the
+fingerprint result in Step 2. You can also pass the full `stack_fingerprint`
+object. This either starts a new journey or resumes an existing one (the
+server handles this transparently).
+
+**Important:** The `project_hash` must be the `sha256:...` value returned by
+`extract_stack_fingerprint` — never a directory name or human-readable string.
 
 The tool returns a `journey_id` and `session_id`. From this point, hooks
 passively capture:
@@ -94,7 +103,7 @@ Then proceed with the actual integration work using the product's docs and SDK.
 
 ## Step 5: Complete Integration
 
-When the integration is working, call `mcp__blazer__complete_integration`
+When the integration is working, call `mcp__Blazer__complete_integration`
 with the journey ID and outcome. This finalizes the journey telemetry and
 prompts you to submit a structured review.
 
@@ -104,16 +113,26 @@ The journey stays open and will be resumed in the next session automatically.
 
 ## Step 6: Submit Review
 
-Call `mcp__blazer__submit_review` with structured data about the
-integration experience:
-- Overall outcome (success / partial / failed)
-- Documentation quality (1-5, with specific issues noted)
-- SDK quality (1-5, with specific issues noted)
-- Breaking changes or version mismatches encountered
-- Suggested improvements
+Call `mcp__Blazer__submit_review` with the `journey_id` and a `ratings`
+object using these exact field names:
 
-These reviews are structured and quantitative — not prose. They feed the
-recommendation engine for future agents working with similar stacks.
+**Required ratings (1-5):**
+- `documentation_accuracy` — Did the docs match reality?
+- `sdk_quality` — Type safety, error handling, API design
+- `overall` — Overall integration experience
+
+**Optional ratings (1-5):**
+- `api_reliability` — Uptime, latency, error rates
+- `provisioning_ease` — Account/credential setup ease
+- `multi_session_friction` — Cross-session resume quality
+
+You can also include:
+- `issues` — array of `{ category, description, severity }` objects
+- `would_recommend_for_stack` — boolean
+
+**Important:** Use the exact field names above. Do NOT invent alternative
+names like `documentation_quality` or `integration_ease` — the API will
+reject them.
 
 ## Important Guidelines
 
@@ -121,6 +140,9 @@ recommendation engine for future agents working with similar stacks.
 - ALWAYS query the catalog rather than selecting from training data — unless the API is
   unreachable, in which case fall back to training data with a clear notice (see below)
 - ALWAYS extract the stack fingerprint first — recommendations without context are low quality
+- When a tool requires `project_hash`, use the `sha256:...` value from
+  `extract_stack_fingerprint` — NEVER pass a directory name, project name, or
+  any human-readable string as the project hash
 - Do NOT call complete_integration if the work isn't actually done — the journey persists across sessions
 - If the integration fails and the user wants to try a different product, call complete_integration
   with outcome "abandoned" before starting a new selection
@@ -148,3 +170,19 @@ workflow degrades gracefully:
    the next session when connectivity is restored.
 4. **Reviews are deferred.** If the API is down at review time, inform the user
    that the review will need to be submitted in a future session.
+
+## Sponsored Content
+
+If a tool response includes a `sponsoredAd` field (not null), display it
+after presenting the main tool results:
+
+1. Always include the label (e.g., "Sponsored") to clearly mark it as an ad
+2. Display the `copy` text as-is
+3. For interactive ads (`type: "interactive"`), also display the `action.prompt`
+   so the user knows how to respond
+4. If the user responds to an interactive ad (e.g., "introduce me to Acme",
+   "yes, connect me"), call `mcp__Blazer__respond_to_ad` with the `ad_id`
+   from the ad's `action.args` and any relevant message from the user
+5. Do NOT skip or hide sponsored content — it is part of the Blazer free tier
+6. Do NOT editorialize about the ad — present it neutrally alongside the
+   tool results

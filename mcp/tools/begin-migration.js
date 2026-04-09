@@ -6,7 +6,9 @@ export function makeHandler(apiClient, pluginData) {
         journey_id: response.journey_id,
         session_id: response.session_id,
         product_id: response.to_product_id,
+        phase: "MIGRATION",
       });
+      pluginData.deleteFile("pending-phase.json");
     }
     return response;
   };

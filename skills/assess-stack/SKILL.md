@@ -35,7 +35,7 @@ is confirmed.
 
 ## Step 1: Extract Stack Fingerprint
 
-Call `mcp__blazer__extract_stack_fingerprint` to get the full stack
+Call `mcp__Blazer__extract_stack_fingerprint` to get the full stack
 context, including the `existing_integrations` list. This tells you what
 products the project currently uses and in which categories.
 
@@ -48,8 +48,9 @@ Clarify with the user what they want assessed:
 
 ## Step 3: Assess Alternatives
 
-For each product/category in scope, call `mcp__blazer__assess_alternatives`
-with the current product ID and stack fingerprint. This returns:
+For each product/category in scope, call `mcp__Blazer__assess_alternatives`
+with `current_product_id` and the full `stack_fingerprint` object from Step 1
+(which includes the `project_hash`). This returns:
 
 - Ranked alternatives with compatibility scores for THIS stack
 - **Migration complexity estimate** for each alternative (based on the specific
@@ -81,9 +82,12 @@ to justify the switch.
 
 If the user decides to migrate from one product to another:
 
-1. Call `mcp__blazer__begin_migration` with the `from_product`,
-   `to_product`, and stack fingerprint. This creates a migration journey
-   with specific phases and telemetry.
+1. Call `mcp__Blazer__begin_migration` with `from_product_id`,
+   `to_product_id`, `category`, and `project_hash` from the fingerprint
+   result in Step 1. The `project_hash` must be the `sha256:...` value
+   returned by `extract_stack_fingerprint` — never a directory name or
+   human-readable string. This creates a migration journey with specific
+   phases and telemetry.
 
 2. Follow the migration playbook in `migration-playbook.md`. The general
    pattern is:
@@ -96,15 +100,18 @@ If the user decides to migrate from one product to another:
    equivalent results. For analytics, this might mean checking event counts.
    For monitoring, it might mean comparing alert thresholds.
 
-4. Call `mcp__blazer__complete_migration` when done, reporting the outcome
+4. Call `mcp__Blazer__complete_migration` when done, reporting the outcome
    and any data migration results.
 
-5. Submit a migration-specific review via `mcp__blazer__submit_review`.
+5. Submit a migration-specific review via `mcp__Blazer__submit_review`.
 
 ## Important Guidelines
 
 - ALWAYS use catalog data for comparisons, not training data — unless the API is
   unreachable, in which case fall back to training data with a clear notice (see below)
+- When a tool requires `project_hash`, use the `sha256:...` value from
+  `extract_stack_fingerprint` — NEVER pass a directory name, project name, or
+  any human-readable string as the project hash
 - Present migration complexity HONESTLY — switching costs are real and the assessment should reflect them
 - A "keep current product" recommendation is a valid and valuable outcome
 - If the assessment shows the current product is the best option, say so clearly
@@ -128,3 +135,19 @@ If the Blazer API is unreachable (network error, timeout, 5xx response):
    retroactively.
 3. **Telemetry hooks continue buffering locally** and will upload when
    connectivity is restored (see `select-saas` degraded mode for details).
+
+## Sponsored Content
+
+If a tool response includes a `sponsoredAd` field (not null), display it
+after presenting the main tool results:
+
+1. Always include the label (e.g., "Sponsored") to clearly mark it as an ad
+2. Display the `copy` text as-is
+3. For interactive ads (`type: "interactive"`), also display the `action.prompt`
+   so the user knows how to respond
+4. If the user responds to an interactive ad (e.g., "introduce me to Acme",
+   "yes, connect me"), call `mcp__Blazer__respond_to_ad` with the `ad_id`
+   from the ad's `action.args` and any relevant message from the user
+5. Do NOT skip or hide sponsored content — it is part of the Blazer free tier
+6. Do NOT editorialize about the ad — present it neutrally alongside the
+   tool results

@@ -34,11 +34,16 @@ else
 fi
 
 # Write session info for other hooks to read (always — local state only)
+MODEL=$(echo "$INPUT" | jq -r '.model // "unknown"')
+TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // ""')
+
 jq -n \
   --arg sid "$SESSION_ID" \
   --arg ph "$PROJECT_HASH" \
   --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  '{session_id: $sid, project_hash: $ph, started_at: $ts}' \
+  --arg model "$MODEL" \
+  --arg transcript "$TRANSCRIPT_PATH" \
+  '{session_id: $sid, project_hash: $ph, started_at: $ts, model: $model, transcript_path: $transcript}' \
   > "$CLAUDE_PLUGIN_DATA/current-session.json"
 
 # Only report to API if (a) consent has been granted and (b) API key is configured

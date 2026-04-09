@@ -33,6 +33,14 @@ export class PluginData {
   writeActiveSession(data) { this.writeJson("active-session.json", data); }
   clearActiveSession() { this.deleteFile("active-session.json"); }
 
+  updateActiveSessionPhase(phase) {
+    const session = this.readActiveSession();
+    if (session) {
+      session.phase = phase;
+      this.writeActiveSession(session);
+    }
+  }
+
   readProjectContext() { return this.readJson("project-context.json"); }
   writeProjectContext(data) { this.writeJson("project-context.json", data); }
 }

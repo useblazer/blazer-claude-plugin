@@ -22,6 +22,7 @@ import { makeHandler as makeSubmitReview } from "./tools/submit-review.js";
 import { makeHandler as makeAssessAlternatives } from "./tools/assess-alternatives.js";
 import { makeHandler as makeBeginMigration } from "./tools/begin-migration.js";
 import { makeHandler as makeCompleteMigration } from "./tools/complete-migration.js";
+import { makeHandler as makeRespondToAd } from "./tools/respond-to-ad.js";
 
 // Initialize singletons — PluginData requires CLAUDE_PLUGIN_DATA env var at runtime
 let pluginData;
@@ -68,6 +69,7 @@ const toolHandlers = {
   assess_alternatives: makeAssessAlternatives(apiClient),
   begin_migration: makeBeginMigration(apiClient, pluginData),
   complete_migration: makeCompleteMigration(apiClient, pluginData),
+  respond_to_ad: makeRespondToAd(apiClient),
 };
 
 // Dispatch helper
@@ -89,171 +91,160 @@ const mcpServer = new McpServer(
 );
 
 // 1. extract_stack_fingerprint
-mcpServer.registerTool(
+mcpServer.tool(
   "extract_stack_fingerprint",
+  "Analyze the current project directory and extract a stack fingerprint describing its technologies",
   {
-    description: "Analyze the current project directory and extract a stack fingerprint describing its technologies",
-    inputSchema: {
-      project_dir: z.string().describe("Absolute path to the project directory to analyze"),
-      consent_confirmed: z.boolean().optional().describe("User has confirmed consent to analyze the project"),
-    },
+    project_dir: z.string().describe("Absolute path to the project directory to analyze"),
+    consent_confirmed: z.boolean().optional().describe("User has confirmed consent to analyze the project"),
   },
   (args) => dispatch("extract_stack_fingerprint", args)
 );
 
 // 2. search_catalog
-mcpServer.registerTool(
+mcpServer.tool(
   "search_catalog",
+  "Search the Blazer catalog for SaaS products matching a category and optional stack/requirements",
   {
-    description: "Search the Blazer catalog for SaaS products matching a category and optional stack/requirements",
-    inputSchema: {
-      category: z.string().describe("Product category to search (e.g. analytics, error-tracking)"),
-      stack_fingerprint: z.record(z.any()).optional().describe("Stack fingerprint from extract_stack_fingerprint"),
-      requirements: z.array(z.string()).optional().describe("Requirements to filter results"),
-      max_results: z.number().int().optional().describe("Maximum number of results to return"),
-    },
+    category: z.string().describe("Product category to search (e.g. product-analytics, error-tracking)"),
+    stack_fingerprint: z.optional(z.any()).describe("Stack fingerprint from extract_stack_fingerprint"),
+    requirements: z.array(z.string()).optional().describe("Requirements to filter results"),
+    max_results: z.number().int().optional().describe("Maximum number of results to return"),
   },
   (args) => dispatch("search_catalog", args)
 );
 
 // 3. get_journey_status
-mcpServer.registerTool(
+mcpServer.tool(
   "get_journey_status",
+  "Get the current integration or migration journey status for a project",
   {
-    description: "Get the current integration or migration journey status for a project",
-    inputSchema: {
-      project_hash: z.string().describe("SHA-256 hash identifying the project"),
-      category: z.string().optional().describe("Filter journeys by category"),
-    },
+    project_hash: z.string().describe("SHA-256 hash identifying the project"),
+    category: z.string().optional().describe("Filter journeys by category"),
   },
   (args) => dispatch("get_journey_status", args)
 );
 
 // 4. begin_integration
-mcpServer.registerTool(
+mcpServer.tool(
   "begin_integration",
+  "Begin a new integration journey for a SaaS product",
   {
-    description: "Begin a new integration journey for a SaaS product",
-    inputSchema: {
-      product_id: z.string().describe("The product identifier from the Blazer catalog"),
-      project_hash: z.string().describe("SHA-256 hash identifying the project"),
-      category: z.string().describe("Product category"),
-      stack_fingerprint: z.record(z.any()).optional().describe("Stack fingerprint for the project"),
-      integration_goal: z.string().optional().describe("Description of what the integration should accomplish"),
-      journey_id: z.string().optional().describe("Optional existing journey ID to resume"),
-    },
+    product_id: z.string().describe("The product identifier from the Blazer catalog"),
+    project_hash: z.string().describe("SHA-256 hash identifying the project"),
+    category: z.string().describe("Product category"),
+    stack_fingerprint: z.optional(z.any()).describe("Stack fingerprint for the project"),
+    integration_goal: z.string().optional().describe("Description of what the integration should accomplish"),
+    journey_id: z.string().optional().describe("Optional existing journey ID to resume"),
   },
   (args) => dispatch("begin_integration", args)
 );
 
 // 5. complete_integration
-mcpServer.registerTool(
+mcpServer.tool(
   "complete_integration",
+  "Mark an integration journey as complete with an outcome",
   {
-    description: "Mark an integration journey as complete with an outcome",
-    inputSchema: {
-      journey_id: z.string().describe("The journey ID to complete"),
-      outcome: z.enum(["success", "partial", "failed", "abandoned"]).describe("The outcome of the integration"),
-      first_successful_call_at: z.string().optional().describe("ISO timestamp of the first successful API call"),
-      notes: z.string().optional().describe("Optional notes about the integration outcome"),
-    },
+    journey_id: z.string().describe("The journey ID to complete"),
+    outcome: z.enum(["success", "partial", "failed", "abandoned"]).describe("The outcome of the integration"),
+    first_successful_call_at: z.string().optional().describe("ISO timestamp of the first successful API call"),
+    notes: z.string().optional().describe("Optional notes about the integration outcome"),
   },
   (args) => dispatch("complete_integration", args)
 );
 
 // 6. submit_review
-mcpServer.registerTool(
+mcpServer.tool(
   "submit_review",
+  "Submit a review and ratings for a completed integration journey",
   {
-    description: "Submit a review and ratings for a completed integration journey",
-    inputSchema: {
-      journey_id: z.string().describe("The journey ID being reviewed"),
-      ratings: z.record(z.any()).describe("Ratings object with numeric scores for various dimensions"),
-      migration_ratings: z.record(z.any()).optional().describe("Ratings specific to migration aspects"),
-      issues: z.array(z.record(z.any())).optional().describe("List of issues encountered during the journey"),
-      would_recommend_for_stack: z.boolean().optional().describe("Whether the user would recommend this product for the current stack"),
-      would_recommend_migration: z.boolean().optional().describe("Whether the user would recommend migrating to/from this product"),
-    },
+    journey_id: z.string().describe("The journey ID being reviewed"),
+    ratings: z.any().describe("Ratings object with numeric scores for various dimensions"),
+    migration_ratings: z.optional(z.any()).describe("Ratings specific to migration aspects"),
+    issues: z.array(z.any()).optional().describe("List of issues encountered during the journey"),
+    would_recommend_for_stack: z.boolean().optional().describe("Whether the user would recommend this product for the current stack"),
+    would_recommend_migration: z.boolean().optional().describe("Whether the user would recommend migrating to/from this product"),
   },
   (args) => dispatch("submit_review", args)
 );
 
 // 7. get_product_detail
-mcpServer.registerTool(
+mcpServer.tool(
   "get_product_detail",
+  "Get detailed information about a specific product from the Blazer catalog",
   {
-    description: "Get detailed information about a specific product from the Blazer catalog",
-    inputSchema: {
-      product_id: z.string().describe("The product identifier from the Blazer catalog"),
-      stack_fingerprint: z.record(z.any()).optional().describe("Stack fingerprint to get stack-specific guidance"),
-    },
+    product_id: z.string().describe("The product identifier from the Blazer catalog"),
+    stack_fingerprint: z.optional(z.any()).describe("Stack fingerprint to get stack-specific guidance"),
   },
   (args) => dispatch("get_product_detail", args)
 );
 
 // 8. report_session_context
-mcpServer.registerTool(
+mcpServer.tool(
   "report_session_context",
+  "Report context about the current Claude Code session for telemetry",
   {
-    description: "Report context about the current Claude Code session for telemetry",
-    inputSchema: {
-      project_hash: z.string().describe("SHA-256 hash identifying the project"),
-      claude_code_session_id: z.string().describe("The current Claude Code session identifier"),
-      active_mcp_servers: z.array(z.string()).optional().describe("List of active MCP server names in this session"),
-    },
+    project_hash: z.string().describe("SHA-256 hash identifying the project"),
+    claude_code_session_id: z.string().describe("The current Claude Code session identifier"),
+    active_mcp_servers: z.array(z.string()).optional().describe("List of active MCP server names in this session"),
   },
   (args) => dispatch("report_session_context", args)
 );
 
 // 9. assess_alternatives
-mcpServer.registerTool(
+mcpServer.tool(
   "assess_alternatives",
+  "Assess alternative products to a currently used product",
   {
-    description: "Assess alternative products to a currently used product",
-    inputSchema: {
-      current_product_id: z.string().describe("The product identifier currently in use"),
-      stack_fingerprint: z.record(z.any()).describe("Stack fingerprint for the project"),
-      category: z.string().optional().describe("Product category to search alternatives in"),
-      requirements: z.array(z.string()).optional().describe("Requirements for the alternative"),
-      max_results: z.number().int().optional().describe("Maximum number of results to return"),
-    },
+    current_product_id: z.string().describe("The product identifier currently in use"),
+    stack_fingerprint: z.any().describe("Stack fingerprint for the project"),
+    category: z.string().optional().describe("Product category to search alternatives in"),
+    requirements: z.array(z.string()).optional().describe("Requirements for the alternative"),
+    max_results: z.number().int().optional().describe("Maximum number of results to return"),
   },
   (args) => dispatch("assess_alternatives", args)
 );
 
 // 10. begin_migration
-mcpServer.registerTool(
+mcpServer.tool(
   "begin_migration",
+  "Begin a migration journey from one product to another",
   {
-    description: "Begin a migration journey from one product to another",
-    inputSchema: {
-      from_product_id: z.string().describe("The product identifier being migrated from"),
-      to_product_id: z.string().describe("The product identifier being migrated to"),
-      project_hash: z.string().describe("SHA-256 hash identifying the project"),
-      category: z.string().describe("Product category"),
-      stack_fingerprint: z.record(z.any()).optional().describe("Stack fingerprint for the project"),
-      migration_plan: z.object({ parallel_run_planned: z.boolean().optional(), data_migration_needed: z.boolean().optional(), estimated_cutover_date: z.string().optional() }).optional().describe("Migration plan details"),
-    },
+    from_product_id: z.string().describe("The product identifier being migrated from"),
+    to_product_id: z.string().describe("The product identifier being migrated to"),
+    project_hash: z.string().describe("SHA-256 hash identifying the project"),
+    category: z.string().describe("Product category"),
+    stack_fingerprint: z.optional(z.any()).describe("Stack fingerprint for the project"),
+    migration_plan: z.object({ parallel_run_planned: z.boolean().optional(), data_migration_needed: z.boolean().optional(), estimated_cutover_date: z.string().optional() }).optional().describe("Migration plan details"),
   },
   (args) => dispatch("begin_migration", args)
 );
 
 // 11. complete_migration
-mcpServer.registerTool(
+mcpServer.tool(
   "complete_migration",
+  "Mark a migration journey as complete with an outcome",
   {
-    description: "Mark a migration journey as complete with an outcome",
-    inputSchema: {
-      journey_id: z.string().describe("The journey ID to complete"),
-      outcome: z.enum(["success", "partial", "rolled-back", "abandoned"]).describe("The outcome of the migration"),
-      old_product_removed: z.boolean().optional().describe("Whether the old product was fully removed"),
-      data_migration_outcome: z.enum(["full", "partial", "skipped", "failed", "not-applicable"]).optional().describe("Outcome of any data migration"),
-      parallel_run_duration_days: z.number().int().optional().describe("Number of days both products ran in parallel"),
-      rollback_reason: z.string().optional().describe("Reason for rollback if outcome is rolled-back"),
-      notes: z.string().optional().describe("Optional notes about the migration outcome"),
-    },
+    journey_id: z.string().describe("The journey ID to complete"),
+    outcome: z.enum(["success", "partial", "rolled-back", "abandoned"]).describe("The outcome of the migration"),
+    old_product_removed: z.boolean().optional().describe("Whether the old product was fully removed"),
+    data_migration_outcome: z.enum(["full", "partial", "skipped", "failed", "not-applicable"]).optional().describe("Outcome of any data migration"),
+    parallel_run_duration_days: z.number().int().optional().describe("Number of days both products ran in parallel"),
+    rollback_reason: z.string().optional().describe("Reason for rollback if outcome is rolled-back"),
+    notes: z.string().optional().describe("Optional notes about the migration outcome"),
   },
   (args) => dispatch("complete_migration", args)
+);
+
+// 12. respond_to_ad
+mcpServer.tool(
+  "respond_to_ad",
+  "Respond to a sponsored ad on behalf of the user (e.g., requesting an introduction, claiming a promotion)",
+  {
+    ad_id: z.string().describe("The ad identifier from the sponsoredAd.action.args in a previous tool response"),
+    user_message: z.string().optional().describe("Any additional context from the user"),
+  },
+  (args) => dispatch("respond_to_ad", args)
 );
 
 // Expose the underlying Server for testing
