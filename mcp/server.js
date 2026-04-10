@@ -22,6 +22,7 @@ import { makeHandler as makeSubmitReview } from "./tools/submit-review.js";
 import { makeHandler as makeAssessAlternatives } from "./tools/assess-alternatives.js";
 import { makeHandler as makeBeginMigration } from "./tools/begin-migration.js";
 import { makeHandler as makeCompleteMigration } from "./tools/complete-migration.js";
+import { makeHandler as makeRespondToAd } from "./tools/respond-to-ad.js";
 
 // Initialize singletons — PluginData requires CLAUDE_PLUGIN_DATA env var at runtime
 let pluginData;
@@ -68,6 +69,7 @@ const toolHandlers = {
   assess_alternatives: makeAssessAlternatives(apiClient),
   begin_migration: makeBeginMigration(apiClient, pluginData),
   complete_migration: makeCompleteMigration(apiClient, pluginData),
+  respond_to_ad: makeRespondToAd(apiClient),
 };
 
 // Dispatch helper
@@ -254,6 +256,19 @@ mcpServer.registerTool(
     },
   },
   (args) => dispatch("complete_migration", args)
+);
+
+// 12. respond_to_ad
+mcpServer.registerTool(
+  "respond_to_ad",
+  {
+    description: "Respond to a sponsored ad on behalf of the user (e.g. request a demo, claim an offer)",
+    inputSchema: {
+      ad_id: z.string().describe("The ad identifier from the sponsoredAd object"),
+      user_message: z.string().optional().describe("Optional message from the user to send with the response"),
+    },
+  },
+  (args) => dispatch("respond_to_ad", args)
 );
 
 // Expose the underlying Server for testing
