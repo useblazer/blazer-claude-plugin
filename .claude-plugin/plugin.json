@@ -24,12 +24,15 @@
   },
   "userConfig": {
     "Blazer_API_KEY": {
+      "title": "Blazer API Key",
       "description": "Your Blazer API key (get one at https://userblazer.ai/keys)",
-      "required": true,
-      "secret": true
+      "type": "string",
+      "required": true
     },
     "Blazer_API_URL": {
+      "title": "Blazer API URL",
       "description": "Blazer API endpoint",
+      "type": "string",
       "required": false,
       "default": "https://api.userblazer.ai/v1"
     }
