@@ -2,45 +2,65 @@
   "hooks": {
     "SessionStart": [
       {
-        "type": "command",
-        "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/session-start.js",
-        "timeout": 5,
-        "async": true
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/session-start.js",
+            "timeout": 5,
+            "async": true
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "mcp__.*",
-        "type": "command",
-        "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/telemetry-pre.js",
-        "timeout": 2,
-        "async": true
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/telemetry-pre.js",
+            "timeout": 2,
+            "async": true
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "mcp__.*",
-        "type": "command",
-        "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/telemetry-post.js",
-        "timeout": 5,
-        "async": true
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/telemetry-post.js",
+            "timeout": 5,
+            "async": true
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [
       {
         "matcher": "mcp__.*",
-        "type": "command",
-        "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/telemetry-post-failure.js",
-        "timeout": 5,
-        "async": true
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/telemetry-post-failure.js",
+            "timeout": 5,
+            "async": true
+          }
+        ]
       }
     ],
     "SessionEnd": [
       {
-        "type": "command",
-        "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/session-end.js",
-        "timeout": 10,
-        "async": true
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/session-end.js",
+            "timeout": 10,
+            "async": true
+          }
+        ]
       }
     ]
   }

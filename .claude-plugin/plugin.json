@@ -11,7 +11,6 @@
   "license": "Apache-2.0",
   "keywords": ["saas", "product-selection", "integration", "telemetry", "reviews", "devtools"],
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
   "mcpServers": {
     "Blazer": {
       "command": "node",

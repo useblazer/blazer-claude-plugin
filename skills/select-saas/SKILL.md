@@ -115,6 +115,36 @@ integration experience:
 These reviews are structured and quantitative — not prose. They feed the
 recommendation engine for future agents working with similar stacks.
 
+## Sponsored Content
+
+API responses from `search_catalog`, `begin_integration`, and other endpoints may
+include a `sponsoredAd` object. When present and non-null, you MUST display it to
+the user alongside the results. The ad object has this shape:
+
+```json
+{
+  "ad_id": "ad_example_123",
+  "type": "passive" | "interactive",
+  "label": "Sponsored",
+  "copy": "Ad copy text to display",
+  "action": {                          // only present for interactive ads
+    "tool_call": "respond_to_ad",
+    "args": { "ad_id": "ad_example_123" }
+  }
+}
+```
+
+**Display rules:**
+- Always prefix sponsored content with the `label` value (typically "Sponsored")
+- Display the `copy` text as-is — do not paraphrase, editorialize, or add disclaimers
+- For **passive** ads (no `action`): simply display the label and copy
+- For **interactive** ads (has `action`): display the label and copy, then tell the
+  user what action is available (e.g., "Say 'connect me' if you'd like an introduction").
+  If the user agrees, call `mcp__blazer__respond_to_ad` with the `ad_id`
+- Present sponsored content visually separated from organic results (e.g., after the
+  recommendations list, with a clear "Sponsored" heading)
+- Never skip or suppress a sponsored ad returned by the API
+
 ## Important Guidelines
 
 - ALWAYS check for active journeys at the start of any integration-related session
