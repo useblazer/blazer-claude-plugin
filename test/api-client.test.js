@@ -64,4 +64,34 @@ describe("ApiClient", () => {
     await client.get("/products/mixpanel");
     assert.strictEqual(capturedMethod, "GET");
   });
+
+  describe("submitFingerprint body hygiene", () => {
+    it("posts the raw fingerprint body without mixing in plugin_version", async () => {
+      const client = new ApiClient(auth, "0.3.0");
+      let capturedUrl, capturedBody;
+      client._fetch = async (url, opts) => {
+        capturedUrl = url;
+        capturedBody = JSON.parse(opts.body);
+        return {
+          ok: true, status: 202,
+          headers: { forEach: () => {} },
+          json: async () => ({ id: "fp_1", status: "pending" }),
+        };
+      };
+
+      const fingerprintBody = {
+        fingerprint_version: "0.1.0",
+        detected_at: "2026-04-15T12:00:00Z",
+        source: { hash_algorithm: "hmac-sha256", repo_hash: "a".repeat(64), key_version: 1 },
+      };
+      await client.submitFingerprint(fingerprintBody);
+
+      // plugin_version travels as a query string, NOT in the JSON body —
+      // the fingerprint schema has additionalProperties: false.
+      assert.match(capturedUrl, /[?&]plugin_version=0\.3\.0/);
+      assert.strictEqual(capturedBody.plugin_version, undefined);
+      assert.strictEqual(capturedBody.fingerprint_version, "0.1.0");
+      assert.strictEqual(capturedBody.source.repo_hash, "a".repeat(64));
+    });
+  });
 });

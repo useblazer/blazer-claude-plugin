@@ -33,11 +33,35 @@ guide the user through setup:
 Do not attempt catalog queries, assessments, or migrations until authentication
 is confirmed.
 
-## Step 1: Extract Stack Fingerprint
+## Step 1: Submit Stack Fingerprint
 
-Call `mcp__blazer__extract_stack_fingerprint` to get the full stack
-context, including the `existing_integrations` list. This tells you what
-products the project currently uses and in which categories.
+Call `mcp__blazer__submit_fingerprint` to collect the project's stack
+context, hash the repo identifiers locally, upload, and receive archetype
+matches. The response includes:
+
+- `body` — the full schema-conformant fingerprint (facets, packages,
+  hashed source) to pass as `stack_fingerprint` in the next steps.
+- `matched_archetypes` — a categorization of the project (e.g.,
+  `rails-monolith`, `express-api`, `react-spa`). Use these to narrate
+  the stack context in the assessment report.
+
+Infer the currently-used products from the fingerprint's `packages`
+list and `facets` values (e.g. `pkg:npm/dd-trace` or
+`facets.observability: [saas:datadog]` → Datadog is in use). This stands
+in for the legacy `existing_integrations` field.
+
+**When downstream tools ask for `stack_fingerprint`** (`assess_alternatives`,
+`begin_migration`, `complete_migration`), pass the `body` returned from
+`submit_fingerprint` verbatim — do NOT reshape it into a custom object
+with `purls`, `languages`, `frameworks`, etc. The server validates the
+body against `docs/fingerprint/fingerprint.schema.json` and persists it
+on the journey for admin review. Faithful passthrough keeps everything
+consistent.
+
+The first call per machine prompts for consent. The fingerprint never
+contains source code, credentials, or business logic. Use
+`mcp__blazer__extract_fingerprint` if you need a local-only extraction
+without upload. `extract_stack_fingerprint` is deprecated.
 
 ## Step 2: Determine Scope
 

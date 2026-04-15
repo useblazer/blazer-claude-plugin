@@ -12,6 +12,8 @@ import { PluginData } from "./lib/plugin-data.js";
 import { Auth } from "./auth.js";
 import { ApiClient } from "./api-client.js";
 import { makeHandler as makeExtractFingerprint } from "./tools/extract-stack-fingerprint.js";
+import { makeHandler as makeExtractFingerprintNew } from "./tools/extract-fingerprint.js";
+import { makeHandler as makeSubmitFingerprint } from "./tools/submit-fingerprint.js";
 import { makeHandler as makeSearchCatalog } from "./tools/search-catalog.js";
 import { makeHandler as makeGetJourneyStatus } from "./tools/get-journey-status.js";
 import { makeHandler as makeGetProductDetail } from "./tools/get-product-detail.js";
@@ -36,7 +38,7 @@ const auth = new Auth(process.env.Blazer_API_KEY, process.env.Blazer_API_URL);
 const apiClient = new ApiClient(auth, PLUGIN_VERSION);
 
 // Tool names that do NOT require auth
-const NO_AUTH_TOOLS = new Set(["extract_stack_fingerprint"]);
+const NO_AUTH_TOOLS = new Set(["extract_stack_fingerprint", "extract_fingerprint"]);
 
 // Auth gate helper — returns null if OK, returns error content if not
 function checkAuth(toolName) {
@@ -59,6 +61,8 @@ function checkAuth(toolName) {
 // Tool handlers
 const toolHandlers = {
   extract_stack_fingerprint: makeExtractFingerprint(pluginData),
+  extract_fingerprint: makeExtractFingerprintNew(),
+  submit_fingerprint:  makeSubmitFingerprint({ apiClient, pluginVersion: PLUGIN_VERSION }),
   search_catalog: makeSearchCatalog(apiClient),
   get_journey_status: makeGetJourneyStatus(apiClient, pluginData),
   get_product_detail: makeGetProductDetail(apiClient),
@@ -90,17 +94,46 @@ const mcpServer = new McpServer(
   { capabilities: { tools: {} } }
 );
 
-// 1. extract_stack_fingerprint
+// 1. extract_stack_fingerprint (DEPRECATED — scheduled for removal in plugin v0.5)
 mcpServer.registerTool(
   "extract_stack_fingerprint",
   {
-    description: "Analyze the current project directory and extract a stack fingerprint describing its technologies",
+    description: "DEPRECATED: Use extract_fingerprint or submit_fingerprint instead. Analyzes the current project directory and extracts a legacy-format stack fingerprint.",
     inputSchema: {
       project_dir: z.string().describe("Absolute path to the project directory to analyze"),
       consent_confirmed: z.boolean().optional().describe("User has confirmed consent to analyze the project"),
     },
   },
   (args) => dispatch("extract_stack_fingerprint", args)
+);
+
+// 1a. extract_fingerprint (new, local only)
+mcpServer.registerTool(
+  "extract_fingerprint",
+  {
+    description: "Extract a schema-conformant fingerprint for the given project directory. Does NOT upload to Blazer — use submit_fingerprint for that.",
+    inputSchema: {
+      project_dir: z.string().describe("Absolute path to the project directory to analyze"),
+      consent_confirmed: z.boolean().optional().describe("User has confirmed consent to analyze the project"),
+    },
+  },
+  (args) => dispatch("extract_fingerprint", args)
+);
+
+// 1b. submit_fingerprint (new, uploads + returns archetype matches)
+mcpServer.registerTool(
+  "submit_fingerprint",
+  {
+    description: "Extract a fingerprint and submit it to Blazer. Returns the enriched response including matched archetypes.",
+    inputSchema: {
+      project_dir: z.string().describe("Absolute path to the project directory to analyze"),
+      repo_url: z.string().optional().describe("Repository URL; hashed locally before transmission"),
+      commit: z.string().optional().describe("40-char commit SHA; hashed locally before transmission"),
+      branch: z.string().optional().describe("Branch name; hashed locally. Omit for non-default branches unless you need to distinguish them."),
+      consent_confirmed: z.boolean().optional().describe("User has confirmed consent to analyze + submit"),
+    },
+  },
+  (args) => dispatch("submit_fingerprint", args)
 );
 
 // 2. search_catalog

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { makeHandler } from "../../mcp/tools/extract-stack-fingerprint.js";
+import { makeHandler, _resetDeprecationNotice } from "../../mcp/tools/extract-stack-fingerprint.js";
 import { PluginData } from "../../mcp/lib/plugin-data.js";
 
 describe("extract_stack_fingerprint tool", () => {
@@ -16,6 +16,7 @@ describe("extract_stack_fingerprint tool", () => {
     tmpProject = fs.mkdtempSync(path.join(os.tmpdir(), "blazer-fp-tool-"));
     tmpData = fs.mkdtempSync(path.join(os.tmpdir(), "blazer-fp-data-"));
     pluginData = new PluginData(tmpData);
+    _resetDeprecationNotice();
     handler = makeHandler(pluginData);
 
     fs.writeFileSync(path.join(tmpProject, "package.json"), JSON.stringify({
@@ -51,5 +52,17 @@ describe("extract_stack_fingerprint tool", () => {
     fs.writeFileSync(path.join(tmpProject, ".claude", "blazer-consent.json"), '{"granted_at":"2026-01-01"}');
     const result = await handler({ project_dir: tmpProject });
     assert.ok(result.project_hash);
+  });
+
+  it("emits a one-shot deprecation notice pointing at the new tools", async () => {
+    const first = await handler({ project_dir: tmpProject, consent_confirmed: true });
+    assert.ok(first.deprecation);
+    assert.strictEqual(first.deprecation.code, "tool_deprecated");
+    assert.ok(first.deprecation.replacement.includes("extract_fingerprint"));
+    assert.ok(first.deprecation.replacement.includes("submit_fingerprint"));
+
+    // Second call in the same process does NOT repeat the notice.
+    const second = await handler({ project_dir: tmpProject });
+    assert.strictEqual(second.deprecation, undefined);
   });
 });
