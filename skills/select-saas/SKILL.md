@@ -46,25 +46,57 @@ If there is an active journey:
 
 If there is no active journey, proceed to Step 2.
 
-## Step 2: Extract Stack Fingerprint
+## Step 2: Submit Stack Fingerprint
 
-Before querying the catalog, collect the project's stack context. Use the
-`mcp__blazer__extract_stack_fingerprint` tool, which will analyze the
-project files and return a structured fingerprint.
+Before querying the catalog, collect + submit the project's stack context.
+Use the `mcp__blazer__submit_fingerprint` tool, which will:
 
-If this is the first time using Blazer in this project, the tool will
-ask the user to confirm that sharing the stack fingerprint is acceptable.
-The fingerprint contains ONLY technology choices (languages, frameworks,
-cloud provider, etc.) — never source code, credentials, or business logic.
+1. Analyze the project's manifests (package.json, Gemfile.lock,
+   pyproject.toml, Podfile.lock, Package.resolved, composer.lock,
+   Cargo.toml, build.gradle, pom.xml, etc.) to emit a schema-conformant
+   fingerprint (`docs/fingerprint/fingerprint.schema.json`).
+2. Hash the repo URL + commit SHA locally using the tenant's HMAC key so
+   Blazer can correlate submissions without learning raw identifiers.
+3. POST the fingerprint to Blazer and poll briefly for archetype matches.
 
-See `stack-fingerprint.md` for the full schema.
+You do NOT need to pass `repo_url` or `commit` — the plugin auto-discovers
+them from the project directory via `git`. Projects without a git remote
+get a stable synthetic `local://` identifier so correlation still works
+for the tenant. Omit `branch` unless you need to distinguish long-lived
+feature branches.
+
+The first invocation per machine prompts the user to confirm consent.
+The stored fingerprint contains ONLY technology signals (languages,
+frameworks, purls, facets) — never source code, credentials, or business
+logic. See `stack-fingerprint.md` for the schema reference.
+
+The response includes a `matched_archetypes` array — a compact
+categorization of the project (e.g., `rails-monolith`, `express-api`,
+`react-spa`, `nextjs-app`). Use these to narrate the project context
+when presenting catalog options in Step 3.
+
+If you only need a local fingerprint without uploading (offline
+inspection, debugging), use `mcp__blazer__extract_fingerprint` instead.
+`mcp__blazer__extract_stack_fingerprint` is deprecated and will be
+removed in plugin v0.5 — do not call it.
 
 ## Step 3: Query the Catalog
 
 Call `mcp__blazer__search_catalog` with:
 - `category`: The type of service needed (e.g., "product-analytics", "error-tracking")
-- `stack_fingerprint`: The fingerprint from Step 2
+- `stack_fingerprint`: **Pass the `body` field from the `submit_fingerprint`
+  response verbatim, without reshaping.** Do NOT construct your own
+  fingerprint object with `{purls: [...], languages: [...], frameworks:
+  [...]}` or any other hand-rolled shape — the server validates against
+  `docs/fingerprint/fingerprint.schema.json`, and the same object is
+  recorded on downstream journeys for admin review. Passing the raw
+  `body` through keeps everything consistent.
 - `requirements`: Any specific requirements from the user (self-hosted, SOC2, etc.)
+
+The same guidance applies to every later call that accepts a
+`stack_fingerprint` argument (`begin_integration`, `assess_alternatives`,
+`begin_migration`) — always pass the `body` returned from
+`submit_fingerprint`.
 
 The catalog returns ranked recommendations with:
 - Compatibility score for this specific stack

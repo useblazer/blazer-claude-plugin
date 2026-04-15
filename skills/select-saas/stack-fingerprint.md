@@ -1,82 +1,94 @@
-# Stack Fingerprint Schema v1
+# Stack Fingerprint Schema v0.1.0
 
-The stack fingerprint is a structured representation of a project's technology
-choices. It is extracted from project files (package.json, Dockerfile, *.csproj,
-terraform files, CI configs, etc.) and NEVER contains source code, credentials,
-or business logic.
+The stack fingerprint is a privacy-preserving, schema-governed description
+of a project's architectural choices. It is extracted from manifest files
+(package.json, Gemfile.lock, pyproject.toml, Podfile.lock, Package.resolved,
+Cargo.toml, composer.lock, build.gradle, pom.xml, etc.) + file-presence
+signals (Dockerfile, .github/workflows/, terraform/, fly.toml, etc.).
 
-## Schema
+The canonical schema lives in `docs/fingerprint/fingerprint.schema.json`.
+Below is a hand-summary of the shape agents see.
+
+## Shape
 
 ```json
 {
-  "schema_version": "1",
-  "project_hash": "sha256:a1b2c3...",
-  "languages": [
-    { "name": "csharp", "version": "12", "runtime": "dotnet-8.0" }
+  "fingerprint_version": "0.1.0",
+  "detected_at": "2026-04-15T12:00:00Z",
+
+  "source": {
+    "hash_algorithm": "hmac-sha256",
+    "key_version": 1,
+    "repo_hash":   "7a9c6e4b…",
+    "commit_hash": "3f5d7b9e…",
+    "branch_hash": "1e3c5a7f…",
+    "detector": "blazer-claude-plugin",
+    "detector_version": "0.3.1"
+  },
+
+  "packages": [
+    { "purl": "pkg:npm/express@4.21.0", "scope": "runtime", "direct": true, "manifest": "package.json", "confidence": 1.0 }
   ],
-  "frameworks": [
-    { "name": "aspnet-core", "version": "8.0" },
-    { "name": "react", "version": "18.3" }
+
+  "facets": {
+    "runtime":         [{ "id": "otel:nodejs", "confidence": 1.0 }],
+    "framework":       [{ "id": "purl:pkg:npm/express", "confidence": 1.0 }],
+    "package_manager": [{ "id": "cncf:npm" }],
+    "ci_cd":           [{ "id": "cncf:github-actions" }],
+    "container_build": [{ "id": "cncf:docker" }],
+    "iac":             [{ "id": "cncf:terraform" }],
+    "observability":   [{ "id": "saas:datadog" }],
+    "payments":        [{ "id": "saas:stripe" }],
+    "datastore":       [{ "id": "purl:pkg:generic/postgres" }]
+  },
+
+  "evidence": [
+    { "type": "manifest", "source": "package.json", "matched": "package.json#dependencies", "supports": ["package_manager", "runtime"] }
   ],
-  "cloud": {
-    "provider": "aws",
-    "compute": ["ecs-fargate"],
-    "regions": ["us-east-1"]
-  },
-  "iac": {
-    "tool": "terraform",
-    "version": "1.7"
-  },
-  "auth": {
-    "provider": "auth0"
-  },
-  "databases": [
-    { "type": "postgresql", "version": "16", "managed": true, "service": "rds" }
-  ],
-  "messaging": {
-    "broker": "sqs",
-    "patterns": ["async-event"]
-  },
-  "ci_cd": {
-    "platform": "github-actions"
-  },
-  "existing_integrations": [
-    { "product": "datadog", "category": "monitoring" },
-    { "product": "stripe", "category": "payments" }
-  ],
-  "deployment_model": "saas",
-  "architecture_hints": ["event-driven", "microservices", "vpc-isolated"]
+
+  "matched_archetypes": [
+    { "id": "express-api",  "confidence": 1.0, "matched_predicates": ["runtime", "packages"] },
+    { "id": "react-spa",    "confidence": 1.0, "matched_predicates": ["runtime", "packages"] }
+  ]
 }
 ```
 
-## Project Hash
+## Key fields
 
-The `project_hash` is computed as:
-1. If the project has a git remote: `SHA-256(git remote origin URL)`
-2. If no git remote: `SHA-256(absolute path of project root)`
+- **`source.repo_hash` / `commit_hash` / `branch_hash`** — HMAC-SHA-256
+  of the canonical repo URL / 40-char commit SHA / branch name using the
+  tenant's hash key. The plugin hashes these locally; raw values never
+  reach Blazer. Two users at the same tenant produce the same hashes for
+  the same repo (see ADR 0001).
 
-This hash is stable across sessions (same project = same hash) but is
-non-reversible — the server cannot determine the project name, URL, or
-path from the hash. It is used solely for journey correlation.
+- **`packages`** — Package URLs (purls) with manifest provenance. Use
+  this list to detect specific products the project already uses
+  (e.g. `pkg:npm/dd-trace` → Datadog SDK, `pkg:gem/stripe` → Stripe).
 
-## Extraction Sources
+- **`facets`** — Layered, multi-valued categorization. Canonical ID
+  prefixes: `cncf:` (CNCF Landscape), `otel:` (OpenTelemetry semantic
+  conventions), `cloud:` (cloud service identifiers), `purl:pkg:…`
+  (when a package is the architectural signal), `saas:` (vendor outside
+  CNCF), `tool:` (proprietary developer tooling).
 
-| Dimension            | Files Inspected                                           |
-| -------------------- | --------------------------------------------------------- |
-| Languages/frameworks | package.json, *.csproj, Gemfile, go.mod, pyproject.toml   |
-| Cloud/compute        | terraform/*.tf, cloudformation/*.yaml, Dockerfile, docker-compose |
-| IaC                  | terraform/*.tf, .terraform.lock.hcl, pulumi.yaml          |
-| Auth                 | SDK imports, config files, environment variable names      |
-| Databases            | connection strings (host/type only), ORM configs, migrations |
-| Messaging            | SDK imports, IaC resource definitions                      |
-| CI/CD                | .github/workflows/, .gitlab-ci.yml, Jenkinsfile           |
-| Existing integrations| SDK imports, config files, IaC resource definitions        |
+- **`matched_archetypes`** — Server-derived categorization returned by
+  `submit_fingerprint`. A single project can match multiple archetypes
+  (backend + frontend, mobile + API, etc.). Use the first two as the
+  headline description of the project.
 
-## Privacy Boundary
+## Privacy boundary
 
 The fingerprint extractor MUST NOT capture:
 - Source code or business logic
-- API keys, tokens, passwords, or connection string credentials
-- File contents beyond metadata (e.g., reads package.json deps, not src/*.ts)
-- User data, PII, or anything in .env files
-- Git history, commit messages, or branch names
+- API keys, tokens, passwords, or connection-string credentials
+- File contents beyond manifest metadata
+- User data, PII, or anything from `.env` files
+- Raw git history, commit messages, or branch names (branch is optional
+  and hashed when included; by default the plugin omits `branch_hash`
+  for non-default branches)
+
+## Related
+
+- Full schema: `docs/fingerprint/fingerprint.schema.json`
+- Tenant hash-key rationale: `docs/adr/0001-tenant-hash-key-for-fingerprint-identifiers.md`
+- Archetype definitions: `docs/fingerprint/archetypes.yaml`

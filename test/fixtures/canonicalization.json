@@ -1,0 +1,188 @@
+{
+  "_comment": "Shared canonicalization+hashing fixture for blazer-rails (Ruby) and blazer-claude-plugin (JS). Each implementation MUST reproduce these outputs byte-for-byte. Do not edit by hand — regenerate with the lib.",
+  "key": {
+    "hex": "4242424242424242424242424242424242424242424242424242424242424242",
+    "base64url": "QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI"
+  },
+  "repo_urls": [
+    {
+      "input": "https://github.com/foo/bar",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com/foo/bar.git",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com/foo/bar/",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com/foo/bar.git/",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "http://github.com/foo/bar",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "git@github.com:foo/bar.git",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "git@github.com:foo/bar",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "git@gitlab.com:group/sub/repo.git",
+      "canonical": "https://gitlab.com/group/sub/repo",
+      "hash": "bb22cd087386f37525963cab7dcc08b525f89c618fb76f556c94de9ce42467c0"
+    },
+    {
+      "input": "https://USER:PASS@github.com/foo/bar",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com/Foo/Bar",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://GitHub.com/foo/bar",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com:443/foo/bar",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com/foo/bar?utm=x",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com/foo/bar#readme",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://gitlab.example.com/team/project",
+      "canonical": "https://gitlab.example.com/team/project",
+      "hash": "0953faf9800ec34bf25a48c55b8aaa05c1a34d1601448973163dace9048af478"
+    },
+    {
+      "input": "https://bitbucket.org/foo/bar",
+      "canonical": "https://bitbucket.org/foo/bar",
+      "hash": "bed23a3b2e50f7520751deeb32bb25a74f6fa1aa95a4cdd09f9ac33fbc3e259b"
+    },
+    {
+      "input": "ssh://git@github.com/foo/bar.git",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com/foo/bar.git/#readme",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "  https://github.com/foo/bar  ",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com/foo/bar-baz_qux",
+      "canonical": "https://github.com/foo/bar-baz_qux",
+      "hash": "66abfe7de0510dc42184f1c07a49c6bfe0e35ea76415395d577de115d08b682d"
+    },
+    {
+      "input": "https://github.com/foo/bar.git?ref=main",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "git@github.com:Foo/Bar.git",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    },
+    {
+      "input": "https://github.com//foo//bar",
+      "canonical": "https://github.com//foo//bar",
+      "hash": "d162ed551eec5c047b3e65ccb6470a323f0ab50f690dfa75434e8b0a6ad7263c"
+    },
+    {
+      "input": "https://gitea.example.com/team/repo.git",
+      "canonical": "https://gitea.example.com/team/repo",
+      "hash": "0df8478213e9ce146f3f4421bb5e1786c59fbe1a06d78ef5c13518c2a211c13c"
+    },
+    {
+      "input": "https://github.com/foo/bar///",
+      "canonical": "https://github.com/foo/bar",
+      "hash": "4ddab11c60ae2f1e274fb6c913c90213d19d5417197d6b4a67a6d44075e8e3a9"
+    }
+  ],
+  "commit_shas": [
+    {
+      "input": "abcdef0123456789abcdef0123456789abcdef01",
+      "canonical": "abcdef0123456789abcdef0123456789abcdef01",
+      "hash": "c9d9a7f68f43e9bd60400a0344d0c5ca6eafc0556c4b10269cc1436f661b5440"
+    },
+    {
+      "input": "ABCDEF0123456789ABCDEF0123456789ABCDEF01",
+      "canonical": "abcdef0123456789abcdef0123456789abcdef01",
+      "hash": "c9d9a7f68f43e9bd60400a0344d0c5ca6eafc0556c4b10269cc1436f661b5440"
+    },
+    {
+      "input": "  0000000000000000000000000000000000000000  ",
+      "canonical": "0000000000000000000000000000000000000000",
+      "hash": "1c92efda1ca79c110efd009e896b9717b59c75bf8286cb67600534560eea79c5"
+    },
+    {
+      "input": "ffffffffffffffffffffffffffffffffffffffff",
+      "canonical": "ffffffffffffffffffffffffffffffffffffffff",
+      "hash": "7bc5680cacff5da15a2f599f5bee0f04c56918241e581e90dac4dc9eb5afa269"
+    },
+    {
+      "input": "1234567890abcdef1234567890abcdef12345678",
+      "canonical": "1234567890abcdef1234567890abcdef12345678",
+      "hash": "04b06c1f5ed36644687b5ff6f22aa5b9cbe77b3055e848e4d7b9b35df6358148"
+    }
+  ],
+  "branches": [
+    {
+      "input": "main",
+      "canonical": "main",
+      "hash": "9de0ffa8ca7b779e7d82004093619f5c2fe9933549fa65750aece00f5b2a5658"
+    },
+    {
+      "input": "master",
+      "canonical": "master",
+      "hash": "4912a3aaaff4c1622f085d55d62167a8139ca53069801eb7600eae353ed3b8b6"
+    },
+    {
+      "input": "feature/foo-bar",
+      "canonical": "feature/foo-bar",
+      "hash": "42dec038ba9af67d9c1f70bdab5bef0a92c5fc810ea31e3cd7894837ace918ba"
+    },
+    {
+      "input": "release-2026-04",
+      "canonical": "release-2026-04",
+      "hash": "14cca0404cb0d63700d352865fb886767c43ea3426e91c081b2d3a190d29022a"
+    },
+    {
+      "input": "MixedCase",
+      "canonical": "MixedCase",
+      "hash": "7499a81a16c8873d62d6e5f8b0e9286674e1cc066984b6d0aa06513261bb28e9"
+    }
+  ]
+}

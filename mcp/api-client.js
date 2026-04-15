@@ -71,4 +71,42 @@ export class ApiClient {
       return { error: "api_error", message: "Invalid JSON response from API" };
     }
   }
+
+  // --- Fingerprint endpoints (see docs/fingerprint/implementation-spec.md §6) ---
+
+  // Returns the raw response envelope — status, headers, body — so the
+  // fingerprint submit flow can branch on 202+warnings / 400 / 410.
+  //
+  // Unlike the standard _request, this path does NOT merge plugin_version
+  // into the JSON body — the fingerprint schema is strict
+  // (additionalProperties: false) and would reject the unexpected key.
+  // plugin_version travels as a query string instead so the existing
+  // check_plugin_version middleware still sees it.
+  async _rawRequest(method, urlOrPath, data) {
+    const base = urlOrPath.startsWith("http") ? urlOrPath : this.url(urlOrPath);
+    const sep = base.includes("?") ? "&" : "?";
+    const fullUrl = `${base}${sep}plugin_version=${encodeURIComponent(this.pluginVersion)}`;
+    const opts = { method, headers: this.auth.headers() };
+    if (method === "POST" && data !== undefined) opts.body = JSON.stringify(data);
+    let response;
+    try { response = await this._fetch(fullUrl, opts); }
+    catch (err) { return { error: "api_unavailable", message: err.message, status: 0, headers: {}, body: null }; }
+    const headers = {};
+    if (response.headers?.forEach) response.headers.forEach((v, k) => { headers[k.toLowerCase()] = v; });
+    let body = null;
+    try { body = await response.json(); } catch { /* leave null */ }
+    return { status: response.status, ok: response.ok, headers, body };
+  }
+
+  async fetchHashKey() {
+    return this.get("/tenants/current/hash_key");
+  }
+
+  async submitFingerprint(body) {
+    return this._rawRequest("POST", "/fingerprints", body);
+  }
+
+  async fetchFingerprint(id) {
+    return this._rawRequest("GET", `/fingerprints/${encodeURIComponent(id)}`);
+  }
 }

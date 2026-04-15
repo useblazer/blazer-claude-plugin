@@ -1,0 +1,51 @@
+{
+  "_comment": "Rules consumed by facet-mapper.js to map detected packages + files to canonical facet IDs. Edit this file to adjust detection without shipping a new plugin binary. Rules are evaluated in declaration order; all matching rules contribute their `set` entries (facet values are unioned).",
+  "rules": [
+    {"when": {"package": "pkg:gem/rails*"},     "set": {"runtime": "otel:ruby", "framework": "purl:pkg:gem/rails", "package_manager": "cncf:bundler"}},
+    {"when": {"package": "pkg:gem/sinatra*"},   "set": {"runtime": "otel:ruby", "framework": "purl:pkg:gem/sinatra"}},
+    {"when": {"package": "pkg:gem/hanami*"},    "set": {"runtime": "otel:ruby", "framework": "purl:pkg:gem/hanami"}},
+    {"when": {"package": "pkg:gem/*"},          "set": {"runtime": "otel:ruby", "package_manager": "cncf:bundler"}},
+
+    {"when": {"package": "pkg:npm/next*"},      "set": {"framework": "purl:pkg:npm/next"}},
+    {"when": {"package": "pkg:npm/react*"},     "set": {"framework": "purl:pkg:npm/react"}},
+    {"when": {"package": "pkg:npm/@nestjs/*"},  "set": {"framework": "purl:pkg:npm/@nestjs/core"}},
+    {"when": {"package": "pkg:npm/express*"},   "set": {"framework": "purl:pkg:npm/express"}},
+    {"when": {"package": "pkg:npm/fastify*"},   "set": {"framework": "purl:pkg:npm/fastify"}},
+    {"when": {"package": "pkg:npm/vue*"},       "set": {"framework": "purl:pkg:npm/vue"}},
+    {"when": {"package": "pkg:npm/svelte*"},    "set": {"framework": "purl:pkg:npm/svelte"}},
+    {"when": {"package": "pkg:npm/hono*"},      "set": {"framework": "purl:pkg:npm/hono"}},
+    {"when": {"package": "pkg:npm/*"},          "set": {"runtime": "otel:nodejs", "package_manager": "cncf:npm"}},
+
+    {"when": {"package": "pkg:pypi/django*"},   "set": {"runtime": "otel:python", "framework": "purl:pkg:pypi/django"}},
+    {"when": {"package": "pkg:pypi/fastapi*"},  "set": {"runtime": "otel:python", "framework": "purl:pkg:pypi/fastapi"}},
+    {"when": {"package": "pkg:pypi/flask*"},    "set": {"runtime": "otel:python", "framework": "purl:pkg:pypi/flask"}},
+    {"when": {"package": "pkg:pypi/streamlit*"},"set": {"runtime": "otel:python"}},
+    {"when": {"package": "pkg:pypi/*"},         "set": {"runtime": "otel:python", "package_manager": "cncf:pip"}},
+
+    {"when": {"package": "pkg:composer/laravel/*"}, "set": {"runtime": "otel:php", "framework": "purl:pkg:composer/laravel/framework"}},
+    {"when": {"package": "pkg:composer/*"},         "set": {"runtime": "otel:php"}},
+
+    {"when": {"package": "pkg:maven/org.springframework.boot/*"}, "set": {"runtime": "otel:jvm", "framework": "purl:pkg:maven/org.springframework.boot/spring-boot"}},
+    {"when": {"package": "pkg:maven/*"},                          "set": {"runtime": "otel:jvm"}},
+
+    {"when": {"file_exists": ".github/workflows"}, "set": {"ci_cd": "cncf:github-actions"}},
+    {"when": {"file_exists": ".gitlab-ci.yml"},    "set": {"ci_cd": "cncf:gitlab-ci"}},
+    {"when": {"file_exists": ".circleci/config.yml"}, "set": {"ci_cd": "cncf:circleci"}},
+    {"when": {"file_exists": ".buildkite/pipeline.yml"}, "set": {"ci_cd": "cncf:buildkite"}},
+    {"when": {"file_exists": "Jenkinsfile"},       "set": {"ci_cd": "cncf:jenkins"}},
+
+    {"when": {"file_exists": "Dockerfile"},        "set": {"container_build": "cncf:docker"}},
+    {"when": {"file_exists": "config/deploy.yml"}, "set": {"iac": "cncf:kamal"}},
+    {"when": {"file_exists": "terraform"},         "set": {"iac": "cncf:terraform"}},
+    {"when": {"file_exists": "Pulumi.yaml"},       "set": {"iac": "cncf:pulumi"}},
+
+    {"when": {"file_exists": "k8s"},               "set": {"orchestration": "cncf:kubernetes"}},
+    {"when": {"file_exists": "kubernetes"},        "set": {"orchestration": "cncf:kubernetes"}},
+    {"when": {"file_exists": "charts"},            "set": {"orchestration": "cncf:helm"}},
+
+    {"when": {"file_exists": "fly.toml"},          "set": {"cloud_provider": "otel:fly_io"}},
+    {"when": {"file_exists": "vercel.json"},       "set": {"cloud_provider": "otel:vercel"}},
+    {"when": {"file_exists": "netlify.toml"},      "set": {"cloud_provider": "otel:netlify"}},
+    {"when": {"file_exists": "wrangler.toml"},     "set": {"cloud_provider": "otel:cloudflare"}}
+  ]
+}
