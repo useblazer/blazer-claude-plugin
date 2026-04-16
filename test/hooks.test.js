@@ -37,7 +37,7 @@ describe("hook scripts", () => {
   describe("session-start.js", () => {
     it("creates current-session.json from stdin", () => {
       runHookScript("session-start.js", { session_id: "sess_test1", cwd: tmpProject }, {
-        CLAUDE_PLUGIN_DATA: tmpData, Blazer_API_KEY: "", Blazer_API_URL: "",
+        CLAUDE_PLUGIN_DATA: tmpData, BLAZER_API_KEY: "", BLAZER_API_URL: "",
       });
       const session = JSON.parse(fs.readFileSync(path.join(tmpData, "current-session.json"), "utf-8"));
       assert.strictEqual(session.session_id, "sess_test1");
@@ -48,7 +48,7 @@ describe("hook scripts", () => {
     it("does not call API when no consent file exists", () => {
       // This test just verifies it exits cleanly without consent
       runHookScript("session-start.js", { session_id: "sess_test2", cwd: tmpProject }, {
-        CLAUDE_PLUGIN_DATA: tmpData, Blazer_API_KEY: "sk-bzr_test", Blazer_API_URL: "",
+        CLAUDE_PLUGIN_DATA: tmpData, BLAZER_API_KEY: "sk-bzr_test", BLAZER_API_URL: "",
       });
       // If we got here without error, the script handled missing consent gracefully
       assert.ok(true);

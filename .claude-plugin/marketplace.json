@@ -1,0 +1,25 @@
+{
+  "name": "useblazer",
+  "owner": {
+    "name": "Blazer",
+    "email": "support@userblazer.ai"
+  },
+  "description": "Official Blazer plugins for Claude Code — AI-native SaaS product selection, stack assessment, and greenfield architecture recommendations.",
+  "plugins": [
+    {
+      "name": "blazer",
+      "source": ".",
+      "description": "Helps agents discover SaaS products, assess existing integrations, and recommend architectures for new projects. Catalog, archetype matching, and guided integration/migration journeys are backed by the Blazer API.",
+      "keywords": [
+        "saas",
+        "product-selection",
+        "integration",
+        "telemetry",
+        "reviews",
+        "greenfield",
+        "architecture",
+        "devtools"
+      ]
+    }
+  ]
+}

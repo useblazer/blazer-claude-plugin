@@ -26,8 +26,8 @@ async function main() {
   const sessionId = currentSession.session_id || "unknown";
   const model = currentSession.model || "";
   const transcriptPath = currentSession.transcript_path || "";
-  const apiUrl = process.env.Blazer_API_URL || "https://api.userblazer.ai/v1";
-  const apiKey = process.env.Blazer_API_KEY || "";
+  const apiUrl = process.env.BLAZER_API_URL || process.env.Blazer_API_URL || "https://api.userblazer.ai/v1";
+  const apiKey = process.env.BLAZER_API_KEY || process.env.Blazer_API_KEY || "";
 
   // --- Parse transcript for token usage ---
   let totalInputTokens = 0;
