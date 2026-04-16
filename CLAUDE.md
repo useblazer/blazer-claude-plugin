@@ -80,8 +80,16 @@ when the plugin is loaded):
 
 - `CLAUDE_PLUGIN_DATA` — absolute path to the plugin's persistent data
   directory. Credentials, consent, and per-project context all live here.
-- `Blazer_API_KEY` — user's Blazer API key (`sk-bzr_…`).
-- `Blazer_API_URL` — optional override, defaults to `https://api.userblazer.ai/v1`.
+- `BLAZER_API_KEY` — user's Blazer API key (`sk-bzr_…`). In installed mode
+  Claude Code maps this from the `api_key` userConfig value (exported as
+  `CLAUDE_PLUGIN_OPTION_API_KEY`) via the `mcpServers.env` block in
+  `.claude-plugin/plugin.json`. For dev / demo / `--plugin-dir` workflows,
+  set `BLAZER_API_KEY` in the shell directly. The legacy mixed-case
+  `Blazer_API_KEY` is still honored as a fallback.
+- `BLAZER_API_URL` — optional override for dev, defaults to
+  `https://api.userblazer.ai/v1`. Not exposed via `userConfig` — end users
+  never see it in the install prompt. The legacy `Blazer_API_URL` is still
+  honored as a fallback.
 
 ## Plugin state
 

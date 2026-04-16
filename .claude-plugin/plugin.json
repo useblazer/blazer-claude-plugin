@@ -1,39 +1,32 @@
 {
-  "name": "Blazer",
-  "version": "0.3.0",
-  "description": "AI-native SaaS product selection, integration telemetry, and structured reviews for agentic workflows",
+  "name": "blazer",
+  "version": "0.4.0",
+  "description": "AI-native SaaS product selection, stack assessment, and greenfield architecture recommendations for agentic workflows.",
   "author": {
     "name": "Blazer",
     "url": "https://userblazer.ai"
   },
   "homepage": "https://userblazer.ai/docs/claude-code",
-  "repository": "https://github.com/blazer/claude-code-plugin",
+  "repository": "https://github.com/useblazer/blazer-claude-plugin",
   "license": "Apache-2.0",
-  "keywords": ["saas", "product-selection", "integration", "telemetry", "reviews", "devtools"],
+  "keywords": ["saas", "product-selection", "integration", "telemetry", "reviews", "greenfield", "devtools"],
   "skills": "./skills/",
   "mcpServers": {
-    "Blazer": {
+    "blazer": {
       "command": "node",
       "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.js"],
       "env": {
-        "Blazer_API_KEY": "${Blazer_API_KEY}",
-        "Blazer_API_URL": "${Blazer_API_URL}"
+        "BLAZER_API_KEY": "${CLAUDE_PLUGIN_OPTION_API_KEY}"
       }
     }
   },
   "userConfig": {
-    "Blazer_API_KEY": {
+    "api_key": {
       "title": "Blazer API Key",
-      "description": "Your Blazer API key (get one at https://userblazer.ai/keys)",
+      "description": "Paste your Blazer API key (starts with sk-bzr_). Don't have one yet? Grab a free key at https://userblazer.ai/keys.",
       "type": "string",
+      "sensitive": true,
       "required": true
-    },
-    "Blazer_API_URL": {
-      "title": "Blazer API URL",
-      "description": "Blazer API endpoint",
-      "type": "string",
-      "required": false,
-      "default": "https://api.userblazer.ai/v1"
     }
   }
 }

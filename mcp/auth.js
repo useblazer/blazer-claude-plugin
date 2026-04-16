@@ -14,7 +14,7 @@ export class Auth {
       return {
         error: "auth_required",
         signup_url: "https://userblazer.ai/signup?ref=claude",
-        message: "Blazer API key is not configured. Sign up at userblazer.ai and run: claude plugin config blazer Blazer_API_KEY <your-key>"
+        message: "Blazer API key is not configured. Get a free key at https://userblazer.ai/keys, then open the plugin settings in Claude Code and paste it into the 'Blazer API Key' field (or re-run `/plugin install blazer` to be prompted)."
       };
     }
 
