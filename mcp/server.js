@@ -25,6 +25,9 @@ import { makeHandler as makeAssessAlternatives } from "./tools/assess-alternativ
 import { makeHandler as makeBeginMigration } from "./tools/begin-migration.js";
 import { makeHandler as makeCompleteMigration } from "./tools/complete-migration.js";
 import { makeHandler as makeRespondToAd } from "./tools/respond-to-ad.js";
+import { makeHandler as makeGetArchetypeQuestions } from "./tools/get-archetype-questions.js";
+import { makeHandler as makeSelectArchetype } from "./tools/select-archetype.js";
+import { makeHandler as makeRecordArchetypeOutcome } from "./tools/record-archetype-outcome.js";
 
 // Initialize singletons — PluginData requires CLAUDE_PLUGIN_DATA env var at runtime
 let pluginData;
@@ -74,6 +77,9 @@ const toolHandlers = {
   begin_migration: makeBeginMigration(apiClient, pluginData),
   complete_migration: makeCompleteMigration(apiClient, pluginData),
   respond_to_ad: makeRespondToAd(apiClient),
+  get_archetype_questions: makeGetArchetypeQuestions(apiClient),
+  select_archetype: makeSelectArchetype(apiClient),
+  record_archetype_outcome: makeRecordArchetypeOutcome(apiClient),
 };
 
 // Dispatch helper
@@ -302,6 +308,42 @@ mcpServer.registerTool(
     },
   },
   (args) => dispatch("respond_to_ad", args)
+);
+
+// 13. get_archetype_questions — drives the select-archetype skill
+mcpServer.registerTool(
+  "get_archetype_questions",
+  {
+    description: "Fetch the greenfield archetype recommender schema: questions to ask the user and the accepted answer values. Returns { schema_version, questions: [{id, label, options: [{value, label}]}] }.",
+    inputSchema: {},
+  },
+  () => dispatch("get_archetype_questions", {})
+);
+
+// 14. select_archetype — submits answers, returns the recommendation
+mcpServer.registerTool(
+  "select_archetype",
+  {
+    description: "Submit the user's answers to the greenfield recommender. Returns the chosen archetype, runner-up alternatives, an opinionated architecture_guidance_md to write into the project, and a selection_id.",
+    inputSchema: {
+      answers: z.record(z.string()).describe("Map of question id -> chosen option value (use the value strings from get_archetype_questions, not the labels)"),
+      schema_version: z.number().int().optional().describe("Schema version returned from get_archetype_questions; lets the server detect drift"),
+    },
+  },
+  (args) => dispatch("select_archetype", args)
+);
+
+// 15. record_archetype_outcome — close the loop on the selection
+mcpServer.registerTool(
+  "record_archetype_outcome",
+  {
+    description: "Record what the agent did with the recommendation. Call with outcome='confirmed' once you've written the architecture guidance to the project, or outcome='rejected' if the user declined the pick.",
+    inputSchema: {
+      selection_id: z.string().describe("The selection_id returned from select_archetype"),
+      outcome: z.enum(["confirmed", "rejected"]).describe("'confirmed' = guidance written to the project; 'rejected' = user declined"),
+    },
+  },
+  (args) => dispatch("record_archetype_outcome", args)
 );
 
 // Expose the underlying Server for testing
