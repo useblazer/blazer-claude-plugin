@@ -28,7 +28,7 @@ were dev-only, loaded via `claude --plugin-dir`.
   system keychain, and hands it to the MCP server as
   `CLAUDE_PLUGIN_OPTION_API_KEY` — no more shell env var setup.
 - **API URL is no longer user-configurable** via the install prompt. The
-  plugin defaults to the production URL (`https://api.userblazer.ai/v1`).
+  plugin defaults to the production URL (`https://api.useblazer.ai/v1`).
   Developers can still override via the `BLAZER_API_URL` shell env for
   local testing.
 - **Plugin slug renamed** from `Blazer` to `blazer` (lowercase,

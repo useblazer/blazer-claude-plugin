@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = "https://api.userblazer.ai/v1";
+const DEFAULT_API_URL = "https://api.useblazer.ai/v1";
 const KEY_PREFIX = "sk-bzr_";
 
 export class Auth {
@@ -13,22 +13,22 @@ export class Auth {
     if (!this.apiKey) {
       return {
         error: "auth_required",
-        signup_url: "https://userblazer.ai/signup?ref=claude",
-        message: "Blazer API key is not configured. Get a free key at https://userblazer.ai/keys, then open the plugin settings in Claude Code and paste it into the 'Blazer API Key' field (or re-run `/plugin install blazer` to be prompted)."
+        signup_url: "https://useblazer.ai/signup?ref=claude",
+        message: "Blazer API key is not configured. Get a free key at https://useblazer.ai/keys, then open the plugin settings in Claude Code and paste it into the 'Blazer API Key' field (or re-run `/plugin install blazer` to be prompted)."
       };
     }
 
     if (!this.apiKey.startsWith(KEY_PREFIX)) {
       return {
         error: "auth_invalid_format",
-        message: `API key must start with '${KEY_PREFIX}'. Check your key at userblazer.ai/keys`
+        message: `API key must start with '${KEY_PREFIX}'. Check your key at useblazer.ai/keys`
       };
     }
 
     if (this._failed) {
       return {
         error: "auth_failed",
-        message: this._failReason || "API key authentication failed. Check your key at userblazer.ai/keys and restart the session."
+        message: this._failReason || "API key authentication failed. Check your key at useblazer.ai/keys and restart the session."
       };
     }
 

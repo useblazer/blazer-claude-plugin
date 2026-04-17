@@ -4,9 +4,9 @@
   "description": "AI-native SaaS product selection, stack assessment, and greenfield architecture recommendations for agentic workflows.",
   "author": {
     "name": "Blazer",
-    "url": "https://userblazer.ai"
+    "url": "https://useblazer.ai"
   },
-  "homepage": "https://userblazer.ai/docs/claude-code",
+  "homepage": "https://useblazer.ai/docs/claude-code",
   "repository": "https://github.com/useblazer/blazer-claude-plugin",
   "license": "Apache-2.0",
   "keywords": ["saas", "product-selection", "integration", "telemetry", "reviews", "greenfield", "devtools"],
@@ -23,7 +23,7 @@
   "userConfig": {
     "api_key": {
       "title": "Blazer API Key",
-      "description": "Paste your Blazer API key (starts with sk-bzr_). Don't have one yet? Grab a free key at https://userblazer.ai/keys.",
+      "description": "Paste your Blazer API key (starts with sk-bzr_). Don't have one yet? Grab a free key at https://useblazer.ai/keys.",
       "type": "string",
       "sensitive": true,
       "required": true

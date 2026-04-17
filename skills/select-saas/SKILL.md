@@ -22,8 +22,8 @@ Before proceeding, ensure the Blazer plugin is authenticated. If any MCP tool
 call returns an `auth_required` or `auth_failed` error, stop the workflow and
 guide the user through setup:
 
-1. Sign up or log in at the URL in the error response (typically userblazer.ai/signup)
-2. Generate an API key at userblazer.ai/keys (starts with `sk-bzr_`)
+1. Sign up or log in at the URL in the error response (typically useblazer.ai/signup)
+2. Generate an API key at useblazer.ai/keys (starts with `sk-bzr_`)
 3. Paste the key into the plugin settings. In Claude Code, open the plugin
    panel → Blazer → paste into the "Blazer API Key" field. Alternately,
    re-run `/plugin install blazer` and Claude Code will prompt for the key.

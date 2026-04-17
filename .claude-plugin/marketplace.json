@@ -2,7 +2,7 @@
   "name": "useblazer",
   "owner": {
     "name": "Blazer",
-    "email": "support@userblazer.ai"
+    "email": "support@useblazer.ai"
   },
   "description": "Official Blazer plugins for Claude Code — AI-native SaaS product selection, stack assessment, and greenfield architecture recommendations.",
   "plugins": [
