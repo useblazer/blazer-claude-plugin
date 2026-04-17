@@ -4,7 +4,7 @@ All notable changes to the Blazer Claude Code plugin. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.2] — 2026-04-17
 
 ### Fixed
 - **Non-ok responses surface the server's `error` and `message`.**
