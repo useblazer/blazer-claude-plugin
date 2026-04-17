@@ -4,6 +4,17 @@ All notable changes to the Blazer Claude Code plugin. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Non-ok responses surface the server's `error` and `message`.**
+  `api-client.js` previously collapsed any non-401 failure into a generic
+  `api_error` with the raw body as text, so structured responses like
+  `{"error":"account_suspended","message":"Account is suspended."}`
+  appeared to the user as a bare "403 error." The client now parses the
+  body as JSON and passes the server's `error` code and `message`
+  through, falling back to raw text when the body isn't JSON.
+
 ## [0.4.1] — 2026-04-17
 
 Patch release fixing three installation/runtime issues found while
