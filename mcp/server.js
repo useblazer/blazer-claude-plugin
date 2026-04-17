@@ -37,11 +37,10 @@ try {
   // Will be null if env var not set; tools that need it will handle this at call time
   pluginData = null;
 }
-// Key name comes from plugin.json's mcpServers.env block, which maps the
-// userConfig `api_key` value (exported by Claude Code as
-// CLAUDE_PLUGIN_OPTION_API_KEY) to BLAZER_API_KEY. The legacy `Blazer_*`
-// env var names remain as a fallback so the demo/dev workflows that set
-// them directly in the shell keep working.
+// plugin.json's mcpServers.env block substitutes the userConfig api_key
+// value into BLAZER_API_KEY via ${user_config.api_key}. Legacy Blazer_*
+// env var names remain as a fallback for demo/dev workflows that set
+// them directly in the shell.
 const apiKey = process.env.BLAZER_API_KEY || process.env.Blazer_API_KEY;
 const apiUrl = process.env.BLAZER_API_URL || process.env.Blazer_API_URL;
 const auth = new Auth(apiKey, apiUrl);
