@@ -57,12 +57,12 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      const text = await response.text().catch(() => "unknown error");
-      return {
-        error: "api_error",
-        status: response.status,
-        message: text
-      };
+      const text = await response.text().catch(() => "");
+      let parsed = null;
+      try { parsed = JSON.parse(text); } catch { /* not JSON */ }
+      const errorCode = parsed?.error || "api_error";
+      const message = parsed?.message || text || "unknown error";
+      return { error: errorCode, status: response.status, message };
     }
 
     try {
