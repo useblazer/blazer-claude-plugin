@@ -4,7 +4,26 @@ All notable changes to the Blazer Claude Code plugin. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] — Unreleased
+## [0.4.1] — 2026-04-17
+
+Patch release fixing three installation/runtime issues found while
+validating the end-to-end install flow from the marketplace.
+
+### Fixed
+- **Marketplace `source` schema.** `.claude-plugin/marketplace.json`
+  used a bare `"source": "."` which the marketplace validator rejected
+  with `plugins.0.source: Invalid input`. Switched to an explicit
+  `github` source object.
+- **userConfig substitution.** `plugin.json`'s MCP env block used
+  `${CLAUDE_PLUGIN_OPTION_API_KEY}`, which Claude Code resolves against
+  the parent shell and reported as missing. Switched to the documented
+  `${user_config.api_key}` placeholder so the API key prompt appears
+  at enable time and the value reaches the MCP subprocess.
+- **Domain typo.** All `userblazer.ai` references across code,
+  config, docs, tests, and changelog corrected to `useblazer.ai`,
+  including the default API base URL.
+
+## [0.4.0] — 2026-04-16
 
 First release installable from the `useblazer` marketplace. Prior versions
 were dev-only, loaded via `claude --plugin-dir`.
@@ -25,8 +44,8 @@ were dev-only, loaded via `claude --plugin-dir`.
 - **API key configuration is now first-class.** `plugin.json` declares a
   `userConfig.api_key` entry with `sensitive: true` and `required: true`.
   Claude Code prompts for the key at install time, stores it in the
-  system keychain, and hands it to the MCP server as
-  `CLAUDE_PLUGIN_OPTION_API_KEY` — no more shell env var setup.
+  system keychain, and hands it to the MCP server via the env block in
+  `plugin.json` — no more shell env var setup.
 - **API URL is no longer user-configurable** via the install prompt. The
   plugin defaults to the production URL (`https://api.useblazer.ai/v1`).
   Developers can still override via the `BLAZER_API_URL` shell env for
