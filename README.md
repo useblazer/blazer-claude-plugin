@@ -25,7 +25,7 @@ Inside Claude Code:
 ```
 
 Claude Code will prompt for a Blazer API key during install. Grab one
-(free) at [userblazer.ai/keys](https://userblazer.ai/keys) — starts with
+(free) at [useblazer.ai/keys](https://useblazer.ai/keys) — starts with
 `sk-bzr_`. Paste it into the prompt and you're done. The key is stored
 in your system keychain, never in plain text.
 
@@ -67,7 +67,7 @@ restart needed after a change.
 - **"API key is not configured"** — the plugin is installed but no key
   is in the keychain. Open the plugin panel and paste your key.
 - **"API key authentication failed"** — the key doesn't match what the
-  server has. Check the key at [userblazer.ai/keys](https://userblazer.ai/keys)
+  server has. Check the key at [useblazer.ai/keys](https://useblazer.ai/keys)
   and update the plugin setting.
 - **"Blazer API is unreachable"** — the plugin falls back to your
   training data for recommendations and buffers telemetry locally for a
@@ -93,6 +93,6 @@ Apache-2.0. See [LICENSE](./LICENSE) for details.
 
 ## Support
 
-- Docs: [userblazer.ai/docs/claude-code](https://userblazer.ai/docs/claude-code)
+- Docs: [useblazer.ai/docs/claude-code](https://useblazer.ai/docs/claude-code)
 - Issues: [github.com/useblazer/blazer-claude-plugin/issues](https://github.com/useblazer/blazer-claude-plugin/issues)
-- Email: support@userblazer.ai
+- Email: support@useblazer.ai

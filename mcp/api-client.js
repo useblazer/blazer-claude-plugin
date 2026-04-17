@@ -52,7 +52,7 @@ export class ApiClient {
       this.auth.setFailed("API key authentication failed (401)");
       return {
         error: "auth_failed",
-        message: "API key authentication failed. Check your key at userblazer.ai/keys and restart the session."
+        message: "API key authentication failed. Check your key at useblazer.ai/keys and restart the session."
       };
     }
 

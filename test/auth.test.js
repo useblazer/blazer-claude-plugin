@@ -45,6 +45,6 @@ describe("Auth", () => {
 
   it("uses default API URL when none provided", () => {
     const auth = new Auth("sk-bzr_test123");
-    assert.strictEqual(auth.apiUrl, "https://api.userblazer.ai/v1");
+    assert.strictEqual(auth.apiUrl, "https://api.useblazer.ai/v1");
   });
 });

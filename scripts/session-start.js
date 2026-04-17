@@ -49,7 +49,7 @@ async function main() {
   const apiKey = process.env.BLAZER_API_KEY || process.env.Blazer_API_KEY;
   if (!apiKey) process.exit(0);
 
-  const apiUrl = process.env.BLAZER_API_URL || process.env.Blazer_API_URL || "https://api.userblazer.ai/v1";
+  const apiUrl = process.env.BLAZER_API_URL || process.env.Blazer_API_URL || "https://api.useblazer.ai/v1";
 
   // Fire-and-forget API call
   try {

@@ -87,7 +87,7 @@ when the plugin is loaded):
   set `BLAZER_API_KEY` in the shell directly. The legacy mixed-case
   `Blazer_API_KEY` is still honored as a fallback.
 - `BLAZER_API_URL` — optional override for dev, defaults to
-  `https://api.userblazer.ai/v1`. Not exposed via `userConfig` — end users
+  `https://api.useblazer.ai/v1`. Not exposed via `userConfig` — end users
   never see it in the install prompt. The legacy `Blazer_API_URL` is still
   honored as a fallback.
 
