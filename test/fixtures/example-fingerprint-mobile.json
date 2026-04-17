@@ -1,0 +1,70 @@
+{
+  "fingerprint_version": "0.1.0",
+  "detected_at": "2026-04-14T17:05:00Z",
+  "source": {
+    "hash_algorithm": "hmac-sha256",
+    "key_version": 1,
+    "repo_hash":   "e2a4c6b8d0f2a4c6e8b0d2f4a6c8e0b2d4f6a8c0e2b4d6f8a0c2e4b6d8f0a2c4",
+    "commit_hash": "b1d3f5a7c9e1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e7b9d1f3a5c7e9b1d3",
+    "detector": "blazer-claude-plugin",
+    "detector_version": "0.3.1"
+  },
+  "languages": [
+    { "id": "swift",      "percent": 92.3, "confidence": 1.0 },
+    { "id": "objective-c","percent": 4.1,  "confidence": 1.0 },
+    { "id": "ruby",       "percent": 3.6,  "confidence": 1.0 }
+  ],
+  "packages": [
+    { "purl": "pkg:swift/github.com/Alamofire/Alamofire@5.9.0",           "scope": "runtime", "direct": true, "manifest": "Package.swift",   "confidence": 1.0 },
+    { "purl": "pkg:swift/github.com/pointfreeco/swift-composable-architecture@1.10.0", "scope": "runtime", "direct": true, "manifest": "Package.swift", "confidence": 1.0 },
+    { "purl": "pkg:cocoapods/FirebaseAuth@10.24.0",                       "scope": "runtime", "direct": true, "manifest": "Podfile",         "confidence": 1.0 },
+    { "purl": "pkg:cocoapods/FirebaseFirestore@10.24.0",                  "scope": "runtime", "direct": true, "manifest": "Podfile",         "confidence": 1.0 },
+    { "purl": "pkg:cocoapods/FirebaseCrashlytics@10.24.0",                "scope": "runtime", "direct": true, "manifest": "Podfile",         "confidence": 1.0 },
+    { "purl": "pkg:gem/fastlane@2.220.0",                                 "scope": "build",   "direct": true, "manifest": "fastlane/Gemfile","confidence": 1.0 }
+  ],
+  "facets": {
+    "runtime":         [{ "id": "otel:swift",        "version": "5.10",  "confidence": 1.0, "evidence_refs": [0] }],
+    "framework":       [
+      { "id": "tool:swiftui", "confidence": 0.95, "evidence_refs": [1] },
+      { "id": "tool:uikit",   "confidence": 0.4,  "evidence_refs": [2] }
+    ],
+    "package_manager": [
+      { "id": "cncf:spm",       "confidence": 1.0, "evidence_refs": [0] },
+      { "id": "cncf:cocoapods", "confidence": 1.0, "evidence_refs": [3] }
+    ],
+    "client_platform": [
+      { "id": "otel:ios",    "version": "16.0", "confidence": 1.0, "evidence_refs": [4] },
+      { "id": "otel:ipados", "version": "16.0", "confidence": 0.9, "evidence_refs": [4] }
+    ],
+    "build_system":    [{ "id": "tool:xcode",                 "version": "15.3", "confidence": 1.0, "evidence_refs": [4] }],
+    "distribution":    [
+      { "id": "saas:app-store", "confidence": 1.0, "evidence_refs": [6] },
+      { "id": "saas:testflight", "confidence": 1.0, "evidence_refs": [6] }
+    ],
+    "ci_cd":           [
+      { "id": "saas:fastlane",      "confidence": 1.0, "evidence_refs": [5] },
+      { "id": "cncf:github-actions","confidence": 1.0, "evidence_refs": [7] }
+    ],
+    "auth":            [{ "id": "saas:firebase-auth",             "confidence": 1.0, "evidence_refs": [3] }],
+    "datastore":       [{ "id": "saas:firebase-firestore",        "confidence": 1.0, "evidence_refs": [3] }],
+    "error_tracking":  [{ "id": "saas:firebase-crashlytics",      "confidence": 1.0, "evidence_refs": [3] }],
+    "cloud_provider":  [{ "id": "otel:gcp",                       "confidence": 0.9, "evidence_refs": [3] }],
+    "testing":         [{ "id": "tool:xctest",                    "confidence": 1.0, "evidence_refs": [8] }]
+  },
+  "evidence": [
+    { "type": "manifest",     "source": "Package.swift",                              "matched": ".package(url: \"https://github.com/Apple/swift-composable-architecture\")", "supports": ["runtime", "framework", "package_manager"] },
+    { "type": "content_match","source": "App/ContentView.swift",                      "matched": "import SwiftUI",                                        "supports": ["framework"] },
+    { "type": "content_match","source": "App/LegacyViewController.swift",             "matched": "import UIKit",                                          "supports": ["framework"] },
+    { "type": "manifest",     "source": "Podfile",                                    "matched": "pod 'Firebase/Auth'",                                   "supports": ["auth", "datastore", "error_tracking", "package_manager", "cloud_provider"] },
+    { "type": "file",         "source": "MyApp.xcodeproj/project.pbxproj",            "matched": "IPHONEOS_DEPLOYMENT_TARGET = 16.0",                     "supports": ["client_platform", "build_system"] },
+    { "type": "file",         "source": "fastlane/Fastfile",                          "matched": "lane :beta do; build_app ...",                          "supports": ["ci_cd"] },
+    { "type": "file",         "source": "fastlane/Deliverfile",                       "matched": "app_identifier \"com.example.myapp\"",                  "supports": ["distribution"] },
+    { "type": "file",         "source": ".github/workflows/ios-ci.yml",               "matched": "uses: actions/checkout@v4",                             "supports": ["ci_cd"] },
+    { "type": "file",         "source": "MyAppTests/MyAppTests.swift",                "matched": "import XCTest",                                         "supports": ["testing"] }
+  ],
+  "archetypes": [
+    { "id": "ios-swiftui-app",         "confidence": 0.95, "matched_predicates": ["client_platform", "framework"], "evidence_refs": [1, 4] },
+    { "id": "mobile-firebase-backend", "confidence": 1.00, "matched_predicates": ["packages"],                     "evidence_refs": [3] }
+  ],
+  "notes": "Example fingerprint for a native iOS app — demonstrates new client_platform, build_system, distribution facets and the mobile-firebase-backend cross-cutting archetype. Note the legacy UIKit import produces a low-confidence secondary framework value rather than disqualifying SwiftUI — most real iOS codebases have both."
+}

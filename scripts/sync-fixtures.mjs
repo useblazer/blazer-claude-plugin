@@ -1,18 +1,21 @@
 #!/usr/bin/env node
-// Sync the cross-repo canonicalization fixture into the plugin's test tree.
+// Sync cross-repo fingerprint artifacts from blazer-rails into the plugin tree.
 //
-// The fixture lives in the monorepo at
-//   docs/fingerprint/fixtures/canonicalization.json
-// and is the contract between blazer-rails (Ruby) and this plugin (JS).
-// When the plugin runs tests standalone (outside the monorepo), the
-// parent-directory path isn't available — so we keep a plugin-local copy
-// at test/fixtures/canonicalization.json that this script refreshes.
+// Sources of truth live in the monorepo under
+//   blazer-rails/data/fingerprint/
+// and this script copies the files the plugin needs so it can run standalone
+// (outside the monorepo) without path gymnastics:
+//
+//   fingerprint.schema.json         -> mcp/lib/fingerprint/fingerprint.schema.json
+//   fixtures/canonicalization.json  -> test/fixtures/canonicalization.json
+//   example-fingerprint.json        -> test/fixtures/example-fingerprint.json
+//   example-fingerprint-mobile.json -> test/fixtures/example-fingerprint-mobile.json
 //
 // Run from the plugin root:
 //   node scripts/sync-fixtures.mjs
 //
-// The test file looks for the plugin-local copy first and falls back to
-// the monorepo path if absent.
+// The schema is read at runtime by mcp/lib/fingerprint/schema-validator.js.
+// The fixtures back the canonicalization-parity and schema-validator tests.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -20,18 +23,43 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = path.resolve(__dirname, "..");
-const MONOREPO_FIXTURE = path.resolve(PLUGIN_ROOT, "..", "docs", "fingerprint", "fixtures", "canonicalization.json");
-const PLUGIN_FIXTURE_DIR = path.join(PLUGIN_ROOT, "test", "fixtures");
-const PLUGIN_FIXTURE = path.join(PLUGIN_FIXTURE_DIR, "canonicalization.json");
+const SOURCE_ROOT = path.resolve(PLUGIN_ROOT, "..", "blazer-rails", "data", "fingerprint");
 
-if (!fs.existsSync(MONOREPO_FIXTURE)) {
-  console.error(`Source fixture not found: ${MONOREPO_FIXTURE}`);
-  console.error("Run this script from inside the blazer monorepo checkout.");
-  process.exit(1);
+const SYNCS = [
+  {
+    src: path.join(SOURCE_ROOT, "fingerprint.schema.json"),
+    dst: path.join(PLUGIN_ROOT, "mcp", "lib", "fingerprint", "fingerprint.schema.json"),
+    label: "schema",
+  },
+  {
+    src: path.join(SOURCE_ROOT, "fixtures", "canonicalization.json"),
+    dst: path.join(PLUGIN_ROOT, "test", "fixtures", "canonicalization.json"),
+    label: "canonicalization fixture",
+  },
+  {
+    src: path.join(SOURCE_ROOT, "example-fingerprint.json"),
+    dst: path.join(PLUGIN_ROOT, "test", "fixtures", "example-fingerprint.json"),
+    label: "example fingerprint",
+  },
+  {
+    src: path.join(SOURCE_ROOT, "example-fingerprint-mobile.json"),
+    dst: path.join(PLUGIN_ROOT, "test", "fixtures", "example-fingerprint-mobile.json"),
+    label: "mobile example fingerprint",
+  },
+];
+
+let failed = false;
+for (const { src, dst, label } of SYNCS) {
+  if (!fs.existsSync(src)) {
+    console.error(`Source ${label} not found: ${src}`);
+    console.error("Run this script from inside the blazer monorepo checkout.");
+    failed = true;
+    continue;
+  }
+  fs.mkdirSync(path.dirname(dst), { recursive: true });
+  fs.copyFileSync(src, dst);
+  const bytes = fs.statSync(dst).size;
+  console.log(`Synced ${label} -> ${path.relative(PLUGIN_ROOT, dst)} (${bytes} bytes)`);
 }
 
-fs.mkdirSync(PLUGIN_FIXTURE_DIR, { recursive: true });
-fs.copyFileSync(MONOREPO_FIXTURE, PLUGIN_FIXTURE);
-
-const bytes = fs.statSync(PLUGIN_FIXTURE).size;
-console.log(`Synced canonicalization fixture -> ${path.relative(PLUGIN_ROOT, PLUGIN_FIXTURE)} (${bytes} bytes)`);
+if (failed) process.exit(1);

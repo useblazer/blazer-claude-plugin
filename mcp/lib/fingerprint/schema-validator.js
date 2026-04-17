@@ -12,7 +12,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SCHEMA_PATH = path.resolve(__dirname, "../../../../docs/fingerprint/fingerprint.schema.json");
+// Schema is bundled next to this validator so the plugin works when installed
+// standalone (outside the monorepo). Keep in sync with the source of truth in
+// blazer-rails/data/fingerprint/fingerprint.schema.json via scripts/sync-fixtures.mjs.
+const SCHEMA_PATH = path.resolve(__dirname, "./fingerprint.schema.json");
 
 let cachedValidator = null;
 

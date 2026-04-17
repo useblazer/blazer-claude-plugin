@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://useblazer.com/schemas/fingerprint/v0.1.0.json",
+  "title": "Blazer Architecture Fingerprint",
+  "description": "A layered fingerprint describing the architecture of a software application. Layer 1 captures code-identity facts (purl/CPE/language). Layer 2 captures environment facts as typed facets drawn from controlled vocabularies (CNCF Landscape IDs, OTEL semantic conventions, cloud service namespaces, purl). Layer 3 is a set of matched archetypes derived from Layers 1 and 2.",
+  "type": "object",
+  "required": ["fingerprint_version", "detected_at"],
+  "additionalProperties": false,
+  "properties": {
+    "fingerprint_version": {
+      "description": "Semver of this fingerprint schema.",
+      "const": "0.1.0"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this fingerprint was produced."
+    },
+    "source": {
+      "type": "object",
+      "description": "Hashed identifiers for the source repository. Plain URLs, commit SHAs, and branch names are NEVER stored — the detector hashes them locally before transmission so Blazer can recognize the same repo across submissions without learning its location or identity.\n\nCONSTRUCTION. All *_hash fields are HMAC-SHA-256(tenant_hash_key, canonical_value), hex-encoded. The `tenant_hash_key` is a 256-bit random value minted by Blazer and scoped to a tenant. The detector fetches it during API-key exchange and caches it locally; all users of the tenant receive the same key, so two users fingerprinting the same repo produce the same hashes. Rotating the key breaks correlation with prior submissions — an acceptable cost when the key is believed leaked.\n\nTHREAT MODEL. Blazer holds both the stored hashes and the tenant key, so Blazer is technically capable of brute-forcing a hash back to a candidate URL (the public-repo URL space is small). This is considered acceptable because (a) Blazer does not do so as a matter of policy, and (b) the attacker who would benefit most from deanonymization — Blazer itself — already sees the submitting tenant's identity by virtue of the API key. A leaked tenant key would let an external attacker perform the same brute force against copies of the hashes they obtained; compared to storing raw URLs, the leak surface is strictly smaller and the compromise is tenant-scoped.\n\nSee docs/fingerprint/README for the detector-side reference implementation.",
+      "additionalProperties": false,
+      "required": ["hash_algorithm"],
+      "properties": {
+        "hash_algorithm": {
+          "description": "Algorithm used for all *_hash fields. Fixed at hmac-sha256; versioned so it can be rotated later without ambiguity.",
+          "const": "hmac-sha256"
+        },
+        "repo_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "HMAC-SHA-256(tenant_hash_key, canonical_repo_url), hex-encoded.\n\nCanonicalization before hashing: (1) if the input is SSH-form (`git@host:org/repo.git`), rewrite to `https://host/org/repo`; (2) strip any userinfo (`user:pass@`); (3) strip a trailing `.git`; (4) strip a trailing `/`; (5) normalize the scheme to `https`; (6) lowercase the entire URL (most forges treat org/repo paths case-insensitively, so lowercasing ensures two users who type the same repo with different casing produce the same hash). The result is hashed as UTF-8 bytes."
+        },
+        "commit_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "HMAC-SHA-256(tenant_hash_key, full 40-char lowercase commit SHA), hex-encoded. Allows correlating a fingerprint to a specific commit across submissions without revealing the SHA itself."
+        },
+        "branch_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Optional HMAC-SHA-256(tenant_hash_key, branch_name). Useful for distinguishing long-lived feature branches that may have materially different architectures. Omit entirely for extra anonymity on side branches — the absence of the field is itself not a tell, since the default branch is the common case."
+        },
+        "key_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Version of the tenant_hash_key used to produce the hashes in this submission. Bumped by Blazer on key rotation; allows the backend to distinguish 'same repo under old key' from 'different repo' when correlating across a rotation event."
+        },
+        "detector": {
+          "type": "string",
+          "description": "Tool or agent that produced the fingerprint (e.g., 'blazer-claude-plugin')."
+        },
+        "detector_version": { "type": "string" }
+      }
+    },
+
+    "languages": {
+      "type": "array",
+      "description": "Layer 1 — source languages detected, using GitHub Linguist IDs (lowercased).",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "description": "Linguist language ID, lowercased (e.g., 'ruby', 'typescript')." },
+          "percent": { "type": "number", "minimum": 0, "maximum": 100 },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "confidence": { "$ref": "#/$defs/confidence" }
+        }
+      }
+    },
+
+    "packages": {
+      "type": "array",
+      "description": "Layer 1 — package dependencies identified by Package URL (purl). CycloneDX-compatible.",
+      "items": {
+        "type": "object",
+        "required": ["purl"],
+        "additionalProperties": false,
+        "properties": {
+          "purl": {
+            "type": "string",
+            "pattern": "^pkg:[a-z0-9.+-]+/",
+            "description": "Package URL per https://github.com/package-url/purl-spec"
+          },
+          "cpe": {
+            "type": "string",
+            "description": "Optional CPE 2.3 URI for commercial / OS-level products."
+          },
+          "scope": {
+            "enum": ["runtime", "dev", "test", "build", "optional"]
+          },
+          "direct": {
+            "type": "boolean",
+            "description": "True if declared directly in a manifest (vs. transitive)."
+          },
+          "manifest": {
+            "type": "string",
+            "description": "Repo-relative path to the manifest that declared this dep."
+          },
+          "confidence": { "$ref": "#/$defs/confidence" }
+        }
+      }
+    },
+
+    "facets": {
+      "type": "object",
+      "description": "Layer 2 — environment facts. Each facet is a multi-valued set of canonical IDs drawn from a controlled vocabulary. A facet may be empty or omitted when unknown. Ambiguity is represented by multiple values with confidence scores.",
+      "additionalProperties": { "$ref": "#/$defs/facetValues" },
+      "properties": {
+        "runtime":         { "$ref": "#/$defs/facetValues", "description": "Execution runtime (e.g., otel:nodejs, otel:python, otel:ruby, otel:jvm)." },
+        "framework":       { "$ref": "#/$defs/facetValues", "description": "Primary application framework (purl or CNCF ID)." },
+        "package_manager": { "$ref": "#/$defs/facetValues", "description": "e.g., cncf:npm, cncf:pnpm, cncf:bundler, cncf:pip, cncf:poetry." },
+
+        "ci_cd":           { "$ref": "#/$defs/facetValues", "description": "CI/CD platform (CNCF Landscape IDs: github-actions, circleci, buildkite, gitlab-ci, ...)." },
+        "iac":             { "$ref": "#/$defs/facetValues", "description": "Infrastructure as Code (cncf:terraform, cncf:pulumi, aws:cdk, aws:sam, cncf:crossplane)." },
+        "container_build": { "$ref": "#/$defs/facetValues", "description": "Image build tooling (cncf:docker, cncf:buildkit, cncf:buildpacks, cncf:ko, cncf:jib)." },
+        "orchestration":   { "$ref": "#/$defs/facetValues", "description": "Runtime orchestrator (cncf:kubernetes, cloud:aws/ecs, cloud:aws/eks, cloud:gcp/gke, cncf:nomad)." },
+        "service_mesh":    { "$ref": "#/$defs/facetValues" },
+        "gitops":          { "$ref": "#/$defs/facetValues", "description": "cncf:argo-cd, cncf:flux." },
+
+        "cloud_provider":  { "$ref": "#/$defs/facetValues", "description": "OTEL cloud.provider values: otel:aws, otel:gcp, otel:azure, otel:cloudflare, otel:heroku, ..." },
+        "cloud_platform":  { "$ref": "#/$defs/facetValues", "description": "Server-side runtime platform. OTEL cloud.platform values: otel:aws_lambda, otel:aws_ecs, otel:gcp_cloud_run, otel:azure_container_apps, ..." },
+        "client_platform": { "$ref": "#/$defs/facetValues", "description": "Target OS/runtime for the compiled artifact, when the app is a client (mobile, desktop, browser). Values: otel:ios, otel:android, otel:ipados, otel:watchos, otel:tvos, otel:macos, otel:windows, otel:linux, otel:web. Multi-valued for apps that target more than one (e.g., a KMP app targets android + ios)." },
+        "build_system":    { "$ref": "#/$defs/facetValues", "description": "Local build toolchain for client/mobile/desktop artifacts — distinct from container_build (OCI images). Values: tool:xcode, tool:xcodebuild, cncf:gradle, cncf:bazel, tool:msbuild, tool:cmake, tool:cargo, tool:swift-build." },
+        "distribution":    { "$ref": "#/$defs/facetValues", "description": "Distribution / release channel for the compiled artifact. Values: saas:app-store, saas:testflight, saas:play-store, saas:firebase-app-distribution, saas:microsoft-store, saas:mac-app-store, saas:homebrew-cask, cncf:fdroid, saas:direct-download, saas:enterprise-mdm." },
+        "cdn":             { "$ref": "#/$defs/facetValues" },
+
+        "datastore":       { "$ref": "#/$defs/facetValues", "description": "Primary OLTP/data stores (cloud:aws/rds-postgres, cloud:aws/dynamodb, pkg:generic/postgres, pkg:generic/mysql, ...)." },
+        "cache":           { "$ref": "#/$defs/facetValues" },
+        "search":          { "$ref": "#/$defs/facetValues" },
+        "object_storage":  { "$ref": "#/$defs/facetValues" },
+        "messaging":       { "$ref": "#/$defs/facetValues", "description": "Queues / streams (cloud:aws/sqs, cloud:aws/sns, cloud:aws/eventbridge, cncf:kafka, cncf:nats)." },
+        "data_warehouse":  { "$ref": "#/$defs/facetValues" },
+        "vector_store":    { "$ref": "#/$defs/facetValues" },
+
+        "auth":            { "$ref": "#/$defs/facetValues" },
+        "secrets":         { "$ref": "#/$defs/facetValues" },
+        "feature_flags":   { "$ref": "#/$defs/facetValues" },
+        "observability":   { "$ref": "#/$defs/facetValues", "description": "Logs/metrics/traces (cncf:prometheus, cncf:opentelemetry, saas:datadog, saas:newrelic)." },
+        "error_tracking":  { "$ref": "#/$defs/facetValues" },
+        "payments":        { "$ref": "#/$defs/facetValues" },
+        "email":           { "$ref": "#/$defs/facetValues" },
+        "analytics":       { "$ref": "#/$defs/facetValues" },
+
+        "testing":         { "$ref": "#/$defs/facetValues" },
+        "linting":         { "$ref": "#/$defs/facetValues" },
+        "ai_provider":     { "$ref": "#/$defs/facetValues", "description": "LLM providers (saas:anthropic, saas:openai, saas:bedrock, saas:vertex-ai)." }
+      }
+    },
+
+    "evidence": {
+      "type": "array",
+      "description": "Raw signals that justified facet/archetype inferences. Indices are referenced by evidence_refs on facet values and archetypes.",
+      "items": {
+        "type": "object",
+        "required": ["type", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": ["file", "manifest", "env_var", "url", "header", "content_match", "api_response", "dns"]
+          },
+          "source": {
+            "type": "string",
+            "description": "Where the signal was observed (e.g., '.github/workflows/ci.yml', 'Gemfile', 'package.json#dependencies.next')."
+          },
+          "matched": {
+            "type": "string",
+            "description": "The concrete value or pattern that matched."
+          },
+          "supports": {
+            "type": "array",
+            "description": "Facet keys or archetype IDs this evidence supports.",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "archetypes": {
+      "type": "array",
+      "description": "Layer 3 — archetype IDs matched, derived from facets + packages via archetype predicates.",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "Archetype ID matching an entry in archetypes.yaml."
+          },
+          "confidence": { "$ref": "#/$defs/confidence" },
+          "matched_predicates": {
+            "type": "array",
+            "description": "List of facet keys (or 'requires'/'any_of' group labels) that matched.",
+            "items": { "type": "string" }
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+
+    "notes": {
+      "type": "string",
+      "description": "Free-form notes from the detector (should not be relied on for matching)."
+    }
+  },
+
+  "$defs": {
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "0 = pure guess, 1 = observed directly in source."
+    },
+    "facetValue": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Canonical identifier prefixed by vocabulary: 'cncf:<item-id>', 'otel:<value>', 'cloud:<provider>/<service>', 'purl:<purl>', 'saas:<vendor>', 'tool:<tool>' (for proprietary developer tooling not in CNCF/OTEL, e.g., tool:xcode, tool:msbuild).",
+          "pattern": "^(cncf:|otel:|cloud:|purl:pkg:|saas:|aws:|gcp:|azure:|tool:)"
+        },
+        "version": { "type": "string" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "facetValues": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/facetValue" }
+    }
+  }
+}

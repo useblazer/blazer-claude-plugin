@@ -17,14 +17,14 @@ function minimalBody() {
 describe("schema-validator", () => {
   it("accepts the checked-in example fingerprint", () => {
     const body = JSON.parse(
-      fs.readFileSync(path.resolve(__dirname, "../../../docs/fingerprint/example-fingerprint.json"), "utf-8")
+      fs.readFileSync(path.resolve(__dirname, "../fixtures/example-fingerprint.json"), "utf-8")
     );
     assert.deepStrictEqual(validate(body), []);
   });
 
   it("accepts the mobile example fingerprint", () => {
     const body = JSON.parse(
-      fs.readFileSync(path.resolve(__dirname, "../../../docs/fingerprint/example-fingerprint-mobile.json"), "utf-8")
+      fs.readFileSync(path.resolve(__dirname, "../fixtures/example-fingerprint-mobile.json"), "utf-8")
     );
     assert.deepStrictEqual(validate(body), []);
   });
