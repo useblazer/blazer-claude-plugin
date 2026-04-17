@@ -16,7 +16,7 @@
       "command": "node",
       "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.js"],
       "env": {
-        "BLAZER_API_KEY": "${CLAUDE_PLUGIN_OPTION_API_KEY}"
+        "BLAZER_API_KEY": "${user_config.api_key}"
       }
     }
   },
