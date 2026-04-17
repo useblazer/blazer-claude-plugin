@@ -8,7 +8,10 @@
   "plugins": [
     {
       "name": "blazer",
-      "source": ".",
+      "source": {
+        "source": "github",
+        "repo": "useblazer/blazer-claude-plugin"
+      },
       "description": "Helps agents discover SaaS products, assess existing integrations, and recommend architectures for new projects. Catalog, archetype matching, and guided integration/migration journeys are backed by the Blazer API.",
       "keywords": [
         "saas",
